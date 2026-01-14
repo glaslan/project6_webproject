@@ -9,6 +9,7 @@ RUN pip install gunicorn
 
 # Copy application code
 COPY app.py .
+COPY templates/ ./templates/
 
 EXPOSE 5000
 

@@ -7,7 +7,12 @@ services:
       - "4000:4000"
     restart: unless-stopped
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - ./app.py:/app/app.py:Z
+      - ./templates:/app/templates:Z
+    command: python app.py
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
