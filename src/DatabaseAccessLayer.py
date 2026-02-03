@@ -1,7 +1,6 @@
 import sqlite3 as sql
 import datetime
 
-
 class Database:
 
     # On initilization, connect/create the database and create the 
@@ -49,7 +48,7 @@ class Database:
         password = user.get("password")
         user_id = user.get("user_id", None)
 
-        json = ('\{"username": "{:}", "password": "{:}"\}'.format(username, password))
+        json = ('{"username": "{:}", "password": "{:}"}'.format(username, password))
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
         if user_id:
@@ -81,7 +80,7 @@ class Database:
         date = datetime.datetime.now() #@Dylan, is this my job or your job? 
 
         # construct the json object
-        json = ('\{"user_id": "{:}", "content": "{:}", "image_ext": "{:}", "date": "{:}"\}'.format(user_id, content, image_ext, date))
+        json = ('{"user_id": "{:}", "content": "{:}", "image_ext": "{:}", "date": "{:}"}'.format(user_id, content, image_ext, date))
 
         # insert the post into the databse
         self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
