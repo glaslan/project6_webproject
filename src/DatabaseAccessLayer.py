@@ -51,10 +51,14 @@ class Database:
         json = ('{"username": "' + username + '", "password": "' + password + '"}')
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
-        if user_id:
-            self.connection.execute("INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json]))
-        else:
-            self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+        try:
+            if user_id:
+                self.connection.execute("INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json]))
+            else:
+                self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+            return True
+        except sql.IntegrityError:
+            return False
 
     def insert_post(self, post: dict) -> bool:
         """
@@ -83,7 +87,11 @@ class Database:
         json = ('{"user_id": "' + user_id + '", "content": "' + content + '", "image_ext": " ' + image_ext + '", "date": "' + date + '"}')
 
         # insert the post into the databse
-        self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
+        try:
+            self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
+            return True
+        except sql.IntegrityError:
+            return False
         
 
     def get_user_by_username(self, username: str) -> dict | None:
@@ -182,8 +190,12 @@ class Database:
         content = edited_post.get("content")
         image = edited_post.get("image_ext")
 
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+user_id+"%"]))
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+image+"%"]))
+        try:
+            self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+user_id+"%"]))
+            self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+image+"%"]))
+            return True
+        except sql.IntegrityError:
+            return False
 
 
     def update_user(self, old_user: dict, edited_user: dict) -> bool:
