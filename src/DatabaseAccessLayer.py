@@ -48,7 +48,8 @@ class Database:
         password = user.get("password")
         user_id = user.get("user_id", None)
 
-        json = ('{"username": "{:}", "password": "{:}"}'.format(username, password))
+        #json = ('{"username": "{}", "password": "{}"}'.format(username, password))
+        json = ('{"username": "' + username + '", "password": "' + password + '"}')
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
         if user_id:
@@ -80,7 +81,8 @@ class Database:
         date = datetime.datetime.now() #@Dylan, is this my job or your job? 
 
         # construct the json object
-        json = ('{"user_id": "{:}", "content": "{:}", "image_ext": "{:}", "date": "{:}"}'.format(user_id, content, image_ext, date))
+        #json = ('{"user_id": "{}", "content": "{}", "image_ext": "{}", "date": "{}"}'.format(user_id, content, image_ext, date))
+        json = (f'{"user_id": "{user_id}", "content": "{content}", "image_ext": "{image_ext}", "date": "{date}"}')
 
         # insert the post into the databse
         self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
@@ -102,7 +104,7 @@ class Database:
             None
         """
 
-        return self.connection.execute("SELECT * FROM users WHERE json_extract(json, '$.username') in '?'", ([username])).fetchone()
+        return self.connection.execute("SELECT * FROM users WHERE json_extract(json, '$.username') LIKE ?", (["%"+username+"%"])).fetchone()
         
 
     def get_user_by_id(self, user_id: int) -> dict | None:
@@ -121,7 +123,7 @@ class Database:
             None
         """
         
-        return self.connection.execute("SELECT * FROM users WHERE user_id in '?'", ([user_id])).fetchone()
+        return self.connection.execute("SELECT * FROM users WHERE user_id LIKE ?", (["%"+user_id+"%"])).fetchone()
 
     def get_post_by_date(self, date: str) -> dict | None:
         """
@@ -139,7 +141,7 @@ class Database:
             None
         """
 
-        return self.connection.execute("SELECT * FROM posts WHERE json_extract(json, '$.date') in '?'", ([date])).fetchone()
+        return self.connection.execute("SELECT * FROM posts WHERE json_extract(json, '$.date') LIKE ?", (["%"+date+"%"])).fetchone()
 
     def get_all_posts(self) -> list[dict]:
         """
@@ -183,8 +185,8 @@ class Database:
         image = edited_post.get("image_ext")
 
         
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') in '?'", ([content, user_id]))
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') in '?'", ([content, image]))
+        self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+user_id+"%"]))
+        self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+image+"%"]))
 
 
     def update_user(self, old_user: dict, edited_user: dict) -> bool:
@@ -223,7 +225,7 @@ class Database:
             None
         """
 
-        return self.connection.execute("DELETE FROM users WHERE user_id in '?'", ([user_id]))
+        return self.connection.execute("DELETE FROM users WHERE user_id LIKE ?", (["%"+user_id+"%"]))
 
     def close(self):
         """
@@ -239,3 +241,4 @@ class Database:
             None
         """
         self.connection.close()
+        
