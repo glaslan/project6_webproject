@@ -1,13 +1,12 @@
 import sqlite3 as sql
 import datetime
 
-
 class Database:
 
     # On initilization, connect/create the database and create the 
     # tables if they do not exist 
-    def __init__(self):
-        '''
+    def __init__(self, path: str):
+        """
         Constructor for the Database class, this will create a connection to the database file and/or
         create the file if it does not exist, as well as create the users and posts tables if they
         also do not exist in the database.
@@ -21,17 +20,20 @@ class Database:
         Raises:
             None
         
-        '''''
+        """
 
         # create the connection, also creates the database file if it does not exist 
-        self.connection = sql.connect("database.db")
+        if not path.endswith(".db"):
+            path += ".db"
+
+        self.connection = sql.connect(path)
         
         # create the user and posts tables if they do not exist
         self.connection.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)")
         self.connection.execute("CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)")
 
     def insert_user(self, user: dict) -> bool:
-        '''
+        """
         This function will insert a new user into the users tables of the database.
 
         Parameters:
@@ -43,22 +45,26 @@ class Database:
 
         Raises: 
             None
-        '''
+        """
 
         username = user.get("username")
         password = user.get("password")
         user_id = user.get("user_id", None)
 
-        json = ('\{"username": "{:}", "password": "{:}"\}'.format(username, password))
+        json = ('{"username": "' + username + '", "password": "' + password + '"}')
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
-        if user_id:
-            self.connection.execute("INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json]))
-        else:
-            self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+        try:
+            if user_id:
+                self.connection.execute("INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json]))
+            else:
+                self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+            return True
+        except sql.IntegrityError:
+            return False
 
     def insert_post(self, post: dict) -> bool:
-        '''
+        """
         This function inserts a post into the post table of the database, the
         post object should contain user_id, image_extension, and content.
         
@@ -71,7 +77,7 @@ class Database:
 
         Raises: 
             None
-        '''
+        """
 
         # extract the values out of the post object/dictionary
         post_id = 1 # PostController.generate_uuid()
@@ -81,30 +87,102 @@ class Database:
         date = datetime.datetime.now() #@Dylan, is this my job or your job? 
 
         # construct the json object
-        json = ('\{"user_id": "{:}", "content": "{:}", "image_ext": "{:}", "date": "{:}"\}'.format(user_id, content, image_ext, date))
+        json = ('{"user_id": "' + user_id + '", "content": "' + content + '", "image_ext": " ' + image_ext + '", "date": "' + date + '"}')
 
         # insert the post into the databse
-        self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
+        try:
+            self.connection.execute("INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json]))
+            return True
+        except sql.IntegrityError:
+            return False
         
 
     def get_user_by_username(self, username: str) -> dict | None:
+        """
+        This function will return a user object/dict based on the username 
+        passed to the function
 
-        return self.connection.execute("SELECT * FROM users WHERE json_extract(json, '$.username') in '?'", ([username])).fetchone()
+        Parameters:
+            username: username of the user object to get
+
+        Returns:
+            dict: user object that has the specified username
+            None: if there is no user with the specfiied username
+
+        Raises:
+            None
+        """
+
+        return self.connection.execute("SELECT * FROM users WHERE json_extract(json, '$.username') LIKE ?", (["%"+username+"%"])).fetchone()
         
 
     def get_user_by_id(self, user_id: int) -> dict | None:
+        """
+        This function will return a user object/dict based on the user_id 
+        passed to the function
+
+        Parameters:
+            user_id: user_id of the user object to get
+
+        Returns:
+            dict: user object that has the specified user_id
+            None: if there is no user with the specfiied user_id
+
+        Raises:
+            None
+        """
         
-        return self.connection.execute("SELECT * FROM users WHERE user_id in '?'", ([user_id])).fetchone()
+        return self.connection.execute("SELECT * FROM users WHERE user_id LIKE ?", (["%"+user_id+"%"])).fetchone()
 
     def get_post_by_date(self, date: str) -> dict | None:
+        """
+        This function will return a post object/dict based on the date 
+        passed to the function
 
-        return self.connection.execute("SELECT * FROM posts WHERE json_extract(json, '$.date') in '?'", ([date])).fetchone()
+        Parameters:
+            date: date of the user object to get
 
-    def get_all_post(self) -> list[dict]:
+        Returns:
+            dict: post object that has the specified date
+            None: if there is no post with the specfiied date
+
+        Raises:
+            None
+        """
+
+        return self.connection.execute("SELECT * FROM posts WHERE json_extract(json, '$.date') LIKE ?", (["%"+date+"%"])).fetchone()
+
+    def get_all_posts(self) -> list[dict]:
+        """
+        This function will return all the post objects in the database
+
+        Parameters:
+            None
+
+        Returns:
+            list[dict]: list of every post object, list will be empty if no posts exists
+
+        Raises:
+            None
+        """
 
         return self.connection.execute("SELECT * FROM posts").fetchall()
 
     def update_post(self, old_post: dict, edited_post: dict, user_id: int) -> bool:
+        """
+        This function updates a posts content and image_ext 
+
+        Parameters:
+            useer_id: the id of the logged in user
+            old_post: the post to be edited
+            edited_post: the post with the edited contents to update
+
+        Returns:
+            bool: True if post can/was updated, False if it could not be
+
+        Raises:
+            None
+        """
 
         # double check user_id of logged in user is the same as the original post
         author = old_post.get("user_id")
@@ -115,23 +193,64 @@ class Database:
         content = edited_post.get("content")
         image = edited_post.get("image_ext")
 
-        
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') in '?'", ([content, user_id]))
-        self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') in '?'", ([content, image]))
+        try:
+            self.connection.execute("UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+user_id+"%"]))
+            self.connection.execute("UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?", ([content, "%"+image+"%"]))
+            return True
+        except sql.IntegrityError:
+            return False
 
 
     def update_user(self, old_user: dict, edited_user: dict) -> bool:
+        """
+        This function updates a user object in the database
+
+        Parameters:
+            old_user: the logged in user object
+            edited_user: the user object with the edited username and password
+
+        Returns:
+            bool: True if user can/was updated, False if it could not be
+
+        Raises:
+            None
+        """
 
         # make sure both users have the same user_id
         if old_user.get("user_id") != edited_user.get("user_id"):
             return False
         
-        self.delete_user(edited_user.get("user_id"))
-        self.insert_user(edited_user)
+        return self.delete_user(edited_user.get("user_id")) and self.insert_user(edited_user)
+        
 
     def delete_user(self, user_id: int) -> bool:
+        """
+        This function deletes a user object from the database
 
-        return self.connection.execute("DELETE FROM users WHERE user_id in '?'", ([user_id]))
+        Parameters:
+            user_id: the user_id of the logged in user to delete
+
+        Returns:
+            bool: True if user can/was deleted, False if it could not be
+
+        Raises:
+            None
+        """
+
+        return self.connection.execute("DELETE FROM users WHERE user_id LIKE ?", (["%"+user_id+"%"])) != None
 
     def close(self):
+        """
+        Closes the conntection to the database
+        
+        Parameters:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         self.connection.close()
+        

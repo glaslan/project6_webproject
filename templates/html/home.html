@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+   <title>5CHIN - Home</title>
+   <style>
+        body { background-color: #c0c0c0; font-family: "Arial", sans-serif; }
+        .navbar { background-color: #000080; color: white; padding: 5px; }
+        .forum-table { border: 2px outset #ffffff; background-color: #e0e0e0; }
+        .forum-header { background-color: #0000a0; color: white; font-weight: bold; }
+        .post-box { border: 2px outset #ffffff; background-color: #ffffff; padding: 8px; margin-bottom: 10px; }
+        .post-meta { font-size: 12px; color: #333333; }
+        .flash { border: 2px outset #ffffff; background-color: #ffffcc; padding: 6px; margin: 10px 0; }
+        a { color: #0000ee; text-decoration: underline; }
+        a:visited { color: #551a8b; }
+        input, textarea { font-family: "Arial", sans-serif; }
+        textarea { width: 98%; }
+        .y2k-btn { border: 2px outset #ffffff; background-color: #e0e0e0; padding: 3px 10px; }
+        .small { font-size: 12px; }
+   </style>
+</head>
+<body text="#000000" link="#0000ee" vlink="#551a8b">
+
+<!--Navigation Bar-->
+<table width="100%" height="120" border="0" cellpadding="4" cellspacing="0" class="navbar">
+  <tr>
+    <td align="left"><b><i><font size="60">5<font size="6">CHIN</font></font></i></b></td>
+    <td align="right">
+      <b>
+        <a href="/" style="color:white;">Home</a> |
+        {% if user %}
+          <a href="/profile" style="color:white;">Profile</a>
+        {% else %}
+          <a href="/register" style="color:white;">Register</a> |
+          <a href="/login" style="color:white;">Login</a>
+        {% endif %}
+      </b>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" border="0" cellpadding="10" cellspacing="0">
+  <tr valign="top">
+    <td width="25%">
+      <!--Sidebar / Boards-->
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Boards</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td><b><a href="/forum">/gen/</a></b><br><font size="2">General Chat</font></td>
+        </tr>
+        <tr bgcolor="#f0f0f0">
+          <td><b><a href="/forum">/tech/</a></b><br><font size="2">Tech & Gadgets</font></td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td><b><a href="/forum">/pics/</a></b><br><font size="2">Images & Media</font></td>
+        </tr>
+      </table>
+
+      <br>
+
+      {% if user %}
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Session</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td class="small">
+            Logged in as <b>{{ user["username"] }}</b><br>
+            <a href="/profile">Go to profile</a>
+          </td>
+        </tr>
+      </table>
+      {% else %}
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Session</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td class="small">
+            You are not logged in.<br>
+            <a href="/login">Login</a> or <a href="/register">Register</a>
+          </td>
+        </tr>
+      </table>
+      {% endif %}
+    </td>
+
+    <td width="75%">
+      <!--Flash messages-->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">
+            {% for m in messages %}
+              <div>&raquo; {{ m }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!--Create Post-->
+      {% if user %}
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Create Post</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td>
+            <form method="POST" enctype="multipart/form-data" action="/">
+              <div class="small"><b>Title</b></div>
+              <input type="text" name="title" size="60" maxlength="80">
+
+              <br><br>
+
+              <div class="small"><b>Content</b> (max {{ max_chars }} chars)</div>
+              <textarea name="content" rows="5" maxlength="{{ max_chars }}"></textarea>
+
+              <br><br>
+
+              <div class="small"><b>Image</b> (optional, max 50MB)</div>
+              <input type="file" name="image">
+
+              <br><br>
+              <input class="y2k-btn" type="submit" value="Post">
+            </form>
+          </td>
+        </tr>
+      </table>
+      <br>
+      {% else %}
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Create Post</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td class="small">
+            Log in to post. <a href="/login">Login</a>
+          </td>
+        </tr>
+      </table>
+      <br>
+      {% endif %}
+
+      <!--Posts Feed-->
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Thread</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td>
+            {% if posts|length == 0 %}
+              <div class="small">No posts yet. Be the first to post.</div>
+            {% else %}
+              {% for p in posts %}
+              <div class="post-box">
+                <div><b>{{ p["title"] }}</b></div>
+                <div class="post-meta">
+                  By <b>{{ p["username"] }}</b> &nbsp;|&nbsp; {{ p["created_at_display"] }}
+                  {% if p["is_owner"] %}
+                    &nbsp;|&nbsp; <a href="/profile">Manage</a>
+                  {% endif %}
+                </div>
+                <hr>
+                <div style="white-space: pre-wrap;">{{ p["content"] }}</div>
+
+                {% if p["image_filename"] %}
+                  <br>
+                  <div class="small"><b>Image:</b></div>
+                  <img src="/images/{{ p["image_filename"] }}" alt="post image" style="max-width: 420px; border: 2px outset #ffffff;">
+                {% endif %}
+              </div>
+              {% endfor %}
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <!--Footer-->
+      <div align="center">
+        <font size="2">
+          Powered by Y2K-Board v1.0 | 2026
+        </font>
+      </div>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

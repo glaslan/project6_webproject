@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+   <title>5CHIN - Profile</title>
+   <style>
+        body { background-color: #c0c0c0; font-family: "Arial", sans-serif; }
+        .navbar { background-color: #000080; color: white; padding: 5px; }
+        .forum-table { border: 2px outset #ffffff; background-color: #e0e0e0; }
+        .forum-header { background-color: #0000a0; color: white; font-weight: bold; }
+        .post-box { border: 2px outset #ffffff; background-color: #ffffff; padding: 8px; margin-bottom: 10px; }
+        .flash { border: 2px outset #ffffff; background-color: #ffffcc; padding: 6px; margin: 10px 0; }
+        a { color: #0000ee; text-decoration: underline; }
+        a:visited { color: #551a8b; }
+        input { font-family: "Arial", sans-serif; }
+        .y2k-btn { border: 2px outset #ffffff; background-color: #e0e0e0; padding: 3px 10px; }
+        .danger { border: 2px outset #ff9999; background-color: #ffcccc; }
+        .small { font-size: 12px; }
+   </style>
+</head>
+<body>
+
+<table width="100%" height="120" border="0" cellpadding="4" cellspacing="0" class="navbar">
+  <tr>
+    <td align="left"><b><i><font size="60">5<font size="6">CHIN</font></font></i></b></td>
+    <td align="center"><b><font size="4">/Profile</font></b></td>
+    <td align="right">
+      <b>
+        <a href="/" style="color:white;">Home</a> |
+        <a href="/profile" style="color:white;">Profile</a>
+      </b>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" border="0" cellpadding="10" cellspacing="0">
+  <tr valign="top">
+    <td width="40%">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">
+            {% for m in messages %}
+              <div>&raquo; {{ m }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Account Info</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td class="small">
+            <b>Username:</b> {{ user["username"] }}<br>
+            <b>User ID:</b> {{ user["user_id"] }}<br>
+            <b>Member Since:</b> {{ user["created_at"] }}<br>
+            <b>Password:</b> ********
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Update Account</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td>
+            <form method="POST" action="/profile">
+              <input type="hidden" name="action" value="update">
+
+              <div class="small"><b>New Username</b></div>
+              <input type="text" name="new_username" size="35" value="{{ user['username'] }}">
+
+              <br><br>
+
+              <div class="small"><b>New Password</b> (leave blank to keep)</div>
+              <input type="password" name="new_password" size="35">
+
+              <br><br>
+
+              <input class="y2k-btn" type="submit" value="Save Changes">
+            </form>
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>Session</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td>
+            <form method="POST" action="/profile" style="display:inline;">
+              <input type="hidden" name="action" value="logout">
+              <input class="y2k-btn" type="submit" value="Logout">
+            </form>
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table danger">
+        <tr class="forum-header">
+          <td>Danger Zone</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td class="small">
+            This deletes your account AND all posts.
+            <br><br>
+            <form method="POST" action="/profile">
+              <input type="hidden" name="action" value="delete_account">
+              <input class="y2k-btn" type="submit" value="Delete Account">
+            </form>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+
+    <td width="60%">
+      <table width="100%" border="0" cellpadding="3" cellspacing="1" class="forum-table">
+        <tr class="forum-header">
+          <td>My Posts</td>
+        </tr>
+        <tr bgcolor="#ffffff">
+          <td>
+            {% if posts|length == 0 %}
+              <div class="small">No posts yet. Post something on <a href="/">Home</a>.</div>
+            {% else %}
+              {% for p in posts %}
+              <div class="post-box">
+                <div><b>{{ p["title"] }}</b></div>
+                <div class="small">{{ p["created_at_display"] }}</div>
+                <hr>
+                <div style="white-space: pre-wrap;">{{ p["content"] }}</div>
+
+                {% if p["image_filename"] %}
+                  <br>
+                  <img src="/images/{{ p["image_filename"] }}" alt="post image"
+                       style="max-width: 320px; border: 2px outset #ffffff;">
+                {% endif %}
+
+                <br><br>
+                <form method="POST" action="/profile">
+                  <input type="hidden" name="action" value="delete_post">
+                  <input type="hidden" name="post_id" value="{{ p['post_id'] }}">
+                  <input class="y2k-btn" type="submit" value="Delete Post">
+                </form>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+
+      <br>
+
+      <div align="center">
+        <font size="2">Powered by Y2K-Board v1.0 | 2026</font>
+      </div>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
