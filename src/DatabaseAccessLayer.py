@@ -5,7 +5,7 @@ class Database:
 
     # On initilization, connect/create the database and create the 
     # tables if they do not exist 
-    def __init__(self):
+    def __init__(self, path: str):
         """
         Constructor for the Database class, this will create a connection to the database file and/or
         create the file if it does not exist, as well as create the users and posts tables if they
@@ -23,7 +23,10 @@ class Database:
         """
 
         # create the connection, also creates the database file if it does not exist 
-        self.connection = sql.connect("database.db")
+        if not path.endswith(".db"):
+            path += ".db"
+
+        self.connection = sql.connect(path)
         
         # create the user and posts tables if they do not exist
         self.connection.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)")
