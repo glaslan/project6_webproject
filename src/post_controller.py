@@ -16,7 +16,7 @@ class PostController():
     def create_post(self, post: dict) -> bool:
         """ Creates a new post in the database """
 
-        if self.db.insert_post(post)
+        if self.db.insert_post(post):
             return True
         return False
 
