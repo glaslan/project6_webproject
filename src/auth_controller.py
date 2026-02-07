@@ -5,7 +5,8 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from src.DatabaseAccessLayer import Database
+from DatabaseAccessLayer import Database
+from constants import *
 
 
 class AuthController:
@@ -24,16 +25,16 @@ class AuthController:
         None: when an error occurs or the provided info is invalid
         """
         local_user = user
-        is_taken = self.db.get_user_by_username(local_user.get("username"))
+        is_taken = self.db.get_user_by_username(local_user.get(USERNAME))
         if is_taken:
             print("Username Taken")
             return None
-        if len(local_user["password"]) < self.min_password_length:
+        if len(local_user[PASSWORD]) < self.min_password_length:
             print("Password too short")
             return None
 
         # Hash the password before storing
-        local_user["password"] = self._hash_password(local_user["password"])
+        local_user[PASSWORD] = self._hash_password(local_user[PASSWORD])
 
         if self.db.insert_user(local_user):
             return local_user
@@ -46,9 +47,9 @@ class AuthController:
         str: user session token
         None: when login fails
         """
-        if self._verify_password(user["username"], user["password"]):
+        if self._verify_password(user[USERNAME], user[PASSWORD]):
             # Retrieve full user data from database for token generation
-            db_user = self.db.get_user_by_username(user["username"])
+            db_user = self.db.get_user_by_username(user[USERNAME])
             return self._generate_token(db_user)
         return None
 
@@ -82,7 +83,7 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
-        return check_password_hash(user["password"], password)
+        return check_password_hash(user[PASSWORD], password)
 
     def _generate_token(self, user) -> str:
         """
@@ -90,7 +91,7 @@ class AuthController:
         Returns:
         str: user session token
         """
-        user_id = user.get("user_id") if isinstance(user, dict) else user[0]
+        user_id = user.get(USER_ID) if isinstance(user, dict) else user[0]
         if user_id is None:
             raise ValueError("User must have user_id to generate token")
         return create_access_token(identity=user_id)
