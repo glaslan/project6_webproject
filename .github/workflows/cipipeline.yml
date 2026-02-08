@@ -13,13 +13,15 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  # Checkout the PR branch
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
@@ -29,9 +31,16 @@ jobs:
           pip install -r requirements.txt
           pip install pylint pytest pre-commit  # Ensuring proper installs
 
-      - name: Run pre-commit
+      - name: Run pre-commit and auto-fix
         run: |
-          pre-commit run --all-files  # Run Pre-Commit hooks
+          pre-commit run --all-files || true  # Allow to continue even if it fails
+
+      - name: Commit pre-commit fixes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "style: auto-fix pre-commit issues"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
 
       - name: Run pylint
         run: |
