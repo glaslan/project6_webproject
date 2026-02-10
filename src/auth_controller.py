@@ -10,7 +10,7 @@ from constants import *
 
 
 class AuthController:
-    """Auth controller class"""
+    """Auth controller class meant to handle user sessions and authentication"""
 
     min_password_length = 8
 

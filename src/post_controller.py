@@ -1,9 +1,13 @@
 """ Module for managing posts """
 from flask import jsonify
 from uuid import uuid4
+from werkzeug.utils import secure_filename
 
 from database_access_layer import Database
 from constants import *
+
+UPLOAD_FOLDER = "./images/"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 class PostController:
@@ -81,22 +85,34 @@ class PostController:
     def get_date(self, post: dict):
         """
         Purpose of this is to convert the date stored into the format
-        that will be displyed on the ui
-        TODO
+        that will be displayed on the ui
         """
 
-        # convert date to human readable format
+        post_date = post.get(POST_DATE)
+        formatted_post_date = post_date[:4] + "-" + post_date[4:6] + "-" + post_date[6:]
+        return formatted_post_date
 
-    def upload_image(self, image_data):
-        """
-        TODO
-        """
+    def allowed_file(filename) -> bool:
+        """Check if the uploaded image has an acceptable extension"""
+        return (
+            "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+        )
 
+    def upload_image(self, file, post_id) -> bool:
+        """
+        Opens file, checks to ensure it is an image then saves it to the uploads folder
+        """
         # get image content
-
         # change filename to post_id
-
         # save the image in the images folder
+        if file.filename == "":
+            flash("No selected file")
+            return False
+        if file and allowed_file(file.filename):
+            _, extension = filename.rsplit(".", 1)
+            filename = str(post_id) + "." + extension
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            return True
 
 
 # db = Database("test.db")
