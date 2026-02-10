@@ -27,8 +27,15 @@ from constants import (
     IMAGE_EXT,
     CONTENT,
     DATE,
+
+    GET,
+    PUT,
+    POST,
+    PATCH,
+    DELETE,
+    OPTIONS
 )
-from DatabaseAccessLayer import Database
+from database_access_layer import Database
 from auth_controller import AuthController
 from post_controller import PostController
 
@@ -49,8 +56,7 @@ jwt = JWTManager(app)
 
 # Controllers
 db = Database(DATABASE_PATH)
-auth = AuthController(db)
-posts = PostController(db)
+
 
 
 def _unwrap(v):
@@ -129,16 +135,19 @@ def get_current_user() -> dict | None:
     return u
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=[GET, POST])
 def home():
     """
     Docstring for home
     Default route for the home page, also handles post creation
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
+
+    posts = PostController(DATABASE_PATH)
+
     user = get_current_user()
 
-    if request.method == "POST":
+    if request.method == POST:
         if not user:
             flash("You must be logged in to create a post", "error")
             return redirect(url_for("login"))
@@ -175,7 +184,7 @@ def home():
             flash("Failed to create post", "error")
         return redirect(url_for("home"))
 
-    all_posts = posts.get_all_posts()
+    all_posts = posts.get_posts()
     all_posts = [_normalise_post(p) for p in all_posts]
 
     for p in all_posts:
@@ -186,10 +195,10 @@ def home():
         except Exception:
             p["author_username"] = None
 
-    return render_template("home.html", user=get_current_user(), posts=all_posts)
+    return render_template("html/home.html", user=get_current_user(), posts=all_posts)
 
 
-@app.route("/register", methods=["GET", "POST", "OPTIONS"])
+@app.route("/register", methods=[GET, POST, OPTIONS])
 def register():
     """
     Docstring for register
@@ -198,40 +207,49 @@ def register():
     template: The registration page html template, with the current user (if logged in)
     """
 
-    if request.method == "OPTIONS":
+    auth = AuthController(DATABASE_PATH)
+
+    if request.method == OPTIONS:
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"
         return resp
 
-    if request.method == "POST":
+    if request.method == POST:
         username = (request.form.get(USERNAME) or "").strip()
         password = request.form.get(PASSWORD) or ""
 
-        created = auth.register({USERNAME: username, PASSWORD: password})
+        potential_new_user = {
+            USERNAME: username,
+            PASSWORD: password
+        }
+        created = auth.register(potential_new_user)
         if not created:
             flash(
                 "Registration failed. Username may be taken or invalid input.", "error"
             )
             return redirect(url_for("register"))
 
-        token = auth.login({USERNAME: username, PASSWORD: password})
+        token = auth.login(potential_new_user)
         if token:
             session["access_token"] = token
 
         flash("Account created successfully.", "success")
         return redirect(url_for("home"))
 
-    return render_template("register.html")
+    return render_template("html/register.html")
 
 
-@app.route("/login", methods=["GET", "POST", "OPTIONS"])
+@app.route("/login", methods=[GET, POST, OPTIONS])
 def login():
     """
     Default route for the login page, also handles login form submission
     Returns:
     template: The login page html template, with the current user (if logged in)
     """
-    if request.method == "OPTIONS":
+
+    auth = AuthController(DATABASE_PATH)
+
+    if request.method == OPTIONS:
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"
         return resp
@@ -241,7 +259,7 @@ def login():
         flash("You are already logged in", "info")
         return redirect(url_for("home"))
 
-    if request.method == "POST":
+    if request.method == POST:
         username = (request.form.get(USERNAME) or "").strip()
         password = request.form.get(PASSWORD) or ""
 
@@ -253,17 +271,21 @@ def login():
         else:
             flash("Invalid username or password", "error")
 
-    return render_template("login.html")
+    return render_template("html/login.html")
 
 
-@app.route("/profile", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+@app.route("/profile", methods=[GET, POST, PUT, PATCH, DELETE, OPTIONS])
 def profile():
     """
     Default route for the profile page, shows the current user's profile information and their posts
     Returns:
     template: The profile page html template, with the current user (if logged in) and their posts
     """
-    if request.method == "OPTIONS":
+
+    auth = AuthController(DATABASE_PATH)
+    posts = PostController(DATABASE_PATH)
+
+    if request.method == OPTIONS:
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         return resp
@@ -272,18 +294,18 @@ def profile():
     user = _normalise_user(user)
 
     if not user:
-        if request.method == "GET":
+        if request.method == GET:
             flash("Please log in first.", "error")
             return redirect(url_for("login"))
         return jsonify({"ok": False, "error": "unauthorized"}), 401
 
-    if request.method == "GET":
+    if request.method == GET:
         all_posts = db.get_all_posts()
         my_posts = [p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])]
 
-        return render_template("profile.html", user=user, posts=my_posts)
+        return render_template("html/profile.html", user=user, posts=my_posts)
 
-    if request.method == "POST":
+    if request.method == POST:
         action = request.form.get("action")
 
         if action == "logout":
@@ -312,7 +334,7 @@ def profile():
 
     data = request.get_json(silent=True) or {}
 
-    if request.method == "PATCH":
+    if request.method == PATCH:
         req_type = (data.get("type") or "user").lower()
 
         if req_type == "user":
@@ -343,7 +365,7 @@ def profile():
                 db.connection.commit()
             return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
 
-        if req_type == "post":
+        if req_type == POST:
             post_id = data.get(POST_ID)
             if post_id is None:
                 return (
@@ -385,11 +407,11 @@ def profile():
                 )
 
             db.connection.commit()
-            return jsonify({"ok": True, "updated": "post"}), 200
+            return jsonify({"ok": True, "updated": POST}), 200
 
         return jsonify({"ok": False, "error": "unknown type"}), 400
 
-    if request.method == "PUT":
+    if request.method == PUT:
         req_type = (data.get("type") or "user").lower()
 
         if req_type == "user":
@@ -418,7 +440,7 @@ def profile():
                 db.connection.commit()
             return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
 
-        if req_type == "post":
+        if req_type == POST:
             post_id = data.get(POST_ID)
             content = data.get(CONTENT)
             image_ext = data.get(IMAGE_EXT, "NONE")
@@ -448,14 +470,14 @@ def profile():
                 (image_ext, int(post_id)),
             )
             db.connection.commit()
-            return jsonify({"ok": True, "replaced": "post"}), 200
+            return jsonify({"ok": True, "replaced": POST}), 200
 
         return jsonify({"ok": False, "error": "unknown type"}), 400
 
-    if request.method == "DELETE":
+    if request.method == DELETE:
         req_type = (data.get("type") or "user").lower()
 
-        if req_type == "post":
+        if req_type == POST:
             date = data.get(DATE)
             if not date:
                 return jsonify({"ok": False, "error": "DELETE post requires date"}), 400
@@ -463,7 +485,7 @@ def profile():
             ok = db.delete_post(str(user[USER_ID]), date)
             if ok:
                 db.connection.commit()
-            return jsonify({"ok": ok, "deleted": "post"}), (200 if ok else 400)
+            return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
 
         if req_type == "user":
             db.connection.execute(
@@ -491,4 +513,4 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=4000, debug=True)
+    app.run(host="0.0.0.0", port=4000)

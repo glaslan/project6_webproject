@@ -5,7 +5,7 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from DatabaseAccessLayer import Database
+from database_access_layer import Database
 from constants import *
 
 
@@ -14,16 +14,17 @@ class AuthController:
 
     min_password_length = 8
 
-    def __init__(self, database_path):
+    def __init__(self, database_path: str):
         self.db = Database(database_path)
 
-    def register(self, user) -> dict | None:
+    def register(self, user: dict) -> dict | None:
         """
         Registers a new user given the user's information.
         Returns:
         dict: the validated user information
         None: when an error occurs or the provided info is invalid
         """
+        print("register")
         local_user = user
         is_taken = self.db.get_user_by_username(local_user.get(USERNAME))
         if is_taken:
@@ -83,6 +84,8 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
+        print(user[PASSWORD])
+        print(password)
         return check_password_hash(user[PASSWORD], password)
 
     def _generate_token(self, user) -> str:
