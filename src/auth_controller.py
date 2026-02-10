@@ -5,8 +5,8 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from database_access_layer import Database
-from constants import *
+from src.database_access_layer import Database
+from src.constants import *
 
 
 class AuthController:
@@ -47,7 +47,11 @@ class AuthController:
         str: user session token
         None: when login fails
         """
-        if self._verify_password(user[USERNAME], user[PASSWORD]):
+        if type(user[PASSWORD]) is tuple:
+            (user_password, *_) = user[PASSWORD]
+        else:
+            user_password = user[PASSWORD]
+        if self._verify_password(user[USERNAME], user_password):
             # Retrieve full user data from database for token generation
             db_user = self.db.get_user_by_username(user[USERNAME])
             return self._generate_token(db_user)
@@ -83,7 +87,10 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
-        (user_password, *_) = user[PASSWORD]
+        if type(user["password"]) is tuple:
+            (user_password, *_) = user["password"]
+        else:
+            user_password = user["password"]
         return check_password_hash(user_password, password)
 
     def _generate_token(self, user) -> str:
@@ -92,7 +99,7 @@ class AuthController:
         Returns:
         str: user session token
         """
-        user_id = user.get(USER_ID) if isinstance(user, dict) else user[0]
+        user_id = user[USER_ID]
         if user_id is None:
             raise ValueError("User must have user_id to generate token")
         return create_access_token(identity=user_id)
