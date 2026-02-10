@@ -50,6 +50,7 @@ jwt = JWTManager(app)
 # Controllers
 db = Database(DATABASE_PATH)
 
+
 def _unwrap(v):
     return v[0] if isinstance(v, tuple) and len(v) == 1 else v
 
@@ -195,7 +196,7 @@ def register():
     Returns:
     template: The registration page html template, with the current user (if logged in)
     """
-    
+
     if request.method == "OPTIONS":
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"
@@ -229,7 +230,7 @@ def login():
     Returns:
     template: The login page html template, with the current user (if logged in)
     """
-    
+
     if request.method == "OPTIONS":
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"
