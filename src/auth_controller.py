@@ -15,8 +15,9 @@ class AuthController:
     min_password_length = 8
 
     def __init__(self, database: Database) -> None:
+
         """
-        Constructor for the AuthController class
+        Constructor for the AuthController class, this will set the database connection to the passed in Database object
 
         Parameters:
             database (Database): the database object to use for authentication
@@ -51,7 +52,7 @@ class AuthController:
         dict: the validated user information
         None: when an error occurs or the provided info is invalid
         """
-        local_user = user
+        local_user = user.copy()
         is_taken = self.db.get_user_by_username(local_user.get(USERNAME))
         if is_taken:
             print("Username Taken")
@@ -110,7 +111,8 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
-        return check_password_hash(user[PASSWORD], password)
+        (user_password, *_) = user[PASSWORD]
+        return check_password_hash(user_password, password)
 
     def _generate_token(self, user) -> str:
         """
