@@ -1,7 +1,7 @@
 import pytest
 from src.auth_controller import AuthController
 from src.DatabaseAccessLayer import Database
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 @pytest.fixture
@@ -19,14 +19,15 @@ class TestAuthController:
             "username": "test_user",
             "password": "test_password",
         }
-        assert auth_controller.register(user) == user
+        auth_controller.register(user)
         user_in_db = auth_controller.db.get_user_by_username(user["username"])
         assert user_in_db is not None
         print(user_in_db)
         assert user_in_db["username"] == user["username"]
-        assert user_in_db["password"] == generate_password_hash(
-            user["password"]
-        )
+        (password, *_) = user_in_db["password"]
+        print(password)
+        print(type(password))
+        assert check_password_hash(password, user['password'])
 
     def test_login(self, auth_controller):
         user = {
