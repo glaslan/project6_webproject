@@ -58,21 +58,19 @@ class Database:
             None
         """
 
-        username = user.get("username")
-        password = user.get("password")
-        user_id = user.get("user_id", None)
+        username = validate_value(user.get("username"))
+        password = validate_value(user.get("password"))
+        user_id = validate_value(user.get("user_id", None))
 
         json = '{"username": "' + username + '", "password": "' + password + '"}'
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
         try:
             if user_id:
-                print("heya")
                 self.connection.execute(
                     "INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json])
                 )
                 self.connection.commit()
-                print("heya")
             else:
                 self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
                 self.connection.commit()
@@ -98,13 +96,13 @@ class Database:
         """
 
         # extract the values out of the post object/dictionary
-        post_id = post.get(POST_ID)
-        content = post.get(CONTENT)
-        image_ext = post.get(IMAGE_EXT)
+        post_id = validate_value(post.get(POST_ID))
+        content = validate_value(post.get(CONTENT))
+        image_ext = validate_value(post.get(IMAGE_EXT))
         if image_ext is None:
             image_ext = "NONE"
-        user_id = post.get(USER_ID)
-        date = str(datetime.datetime.now())  # @Dylan, is this my job or your job?
+        user_id = validate_value(post.get(USER_ID))
+        date = str(datetime.datetime.now()) 
 
         # construct the json object
         json = (
@@ -157,9 +155,9 @@ class Database:
         ).fetchone()
 
         if user_id is not None:
-            user[USERNAME] = username
-            user[PASSWORD] = password
-            user[USER_ID] = user_id
+            user[USERNAME] = validate_value(username)
+            user[PASSWORD] = validate_value(password)
+            user[USER_ID] = validate_value(user_id)
             return user
 
         return None
@@ -184,17 +182,17 @@ class Database:
 
         username = self.connection.execute(
             "SELECT json_extract(json, '$.username') FROM users WHERE user_id LIKE ?",
-            (["%" + user_id + "%"]),
+            (["%" + str(user_id) + "%"]),
         ).fetchone()
         password = self.connection.execute(
             "SELECT json_extract(json, '$.password') FROM users WHERE user_id LIKE ?",
-            (["%" + user_id + "%"]),
+            (["%" + str(user_id) + "%"]),
         ).fetchone()
 
         if username is not None:
-            user[USERNAME] = username
-            user[PASSWORD] = password
-            user[USER_ID] = user_id
+            user[USERNAME] = validate_value(username)
+            user[PASSWORD] = validate_value(password)
+            user[USER_ID] = validate_value(user_id)
             return user
 
         return None
@@ -237,11 +235,11 @@ class Database:
 
         # put the post object together if it exists in the database
         if user_id is not None:
-            post[USER_ID] = user_id
-            post[IMAGE_EXT] = image_ext
-            post[CONTENT] = content
-            post[DATE] = date
-            post[POST_ID] = post_id
+            post[USER_ID] = validate_value(user_id)
+            post[IMAGE_EXT] = validate_value(image_ext)
+            post[CONTENT] = validate_value(content)
+            post[DATE] = validate_value(date)
+            post[POST_ID] = validate_value(post_id)
             return post
 
         # if the post object was not found then return None
@@ -285,11 +283,11 @@ class Database:
 
         # put the post object together if it exists in the database
         if user_id is not None:
-            post[USER_ID] = user_id
-            post[IMAGE_EXT] = image_ext
-            post[CONTENT] = content
-            post[DATE] = date
-            post[POST_ID] = post_id
+            post[USER_ID] = validate_value(user_id)
+            post[IMAGE_EXT] = validate_value(image_ext)
+            post[CONTENT] = validate_value(content)
+            post[DATE] = validate_value(date)
+            post[POST_ID] = validate_value(post_id)
             return post
 
         # if the post object was not found then return None
@@ -318,11 +316,11 @@ class Database:
         for post_id, user_id, image_ext, content, date in posts:
 
             structured_post = {}
-            structured_post[POST_ID] = post_id
-            structured_post[USER_ID] = user_id
-            structured_post[IMAGE_EXT] = image_ext
-            structured_post[CONTENT] = content
-            structured_post[DATE] = date
+            structured_post[POST_ID] = validate_value(post_id)
+            structured_post[USER_ID] = validate_value(user_id)
+            structured_post[IMAGE_EXT] = validate_value(image_ext)
+            structured_post[CONTENT] = validate_value(content)
+            structured_post[DATE] = validate_value(date)
             post_collection.append(structured_post)
 
         return post_collection
@@ -355,7 +353,7 @@ class Database:
         try:
             self.connection.execute(
                 "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                ([content, "%" + user_id + "%"]),
+                ([content, "%" + str(user_id) + "%"]),
             )
             self.connection.execute(
                 "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
@@ -385,9 +383,7 @@ class Database:
         if old_user.get(USER_ID) != edited_user.get(USER_ID):
             return False
 
-        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(
-            edited_user
-        )
+        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(edited_user)
 
     def delete_user(self, user_id: int) -> bool:
         """
@@ -405,7 +401,7 @@ class Database:
 
         try:
             data = self.connection.execute(
-                "DELETE FROM users WHERE user_id LIKE ?", (["%" + user_id + "%"])
+                "DELETE FROM users WHERE user_id LIKE ?", (["%" + str(user_id) + "%"])
             )
             self.connection.commit()
             return data is not None
@@ -426,7 +422,7 @@ class Database:
         try:
             data = self.connection.execute(
                 "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
-                (["%" + user_id + "%", "%" + date + "%"]),
+                (["%" + str(user_id) + "%", "%" + date + "%"]),
             )
             self.connection.commit()
             return data is not None
@@ -466,3 +462,11 @@ class Database:
         )
 
         self.connection.commit()
+
+def validate_value(value):
+
+    if not value:
+        return value
+    if isinstance(value, tuple):
+        return value[0]
+    return value

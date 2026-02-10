@@ -1,5 +1,7 @@
 """Module for validating user authentication"""
 
+
+import traceback
 from flask import jsonify
 from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -44,13 +46,15 @@ class AuthController:
         """
         Attempt to log a user into the site.
         Returns:
-        str: user session token
-        None: when login fails
+        str: user_id on successful login
+        None: login failed
         """
+        print(user)
         if self._verify_password(user[USERNAME], user[PASSWORD]):
             # Retrieve full user data from database for token generation
-            db_user = self.db.get_user_by_username(user[USERNAME])
-            return self._generate_token(db_user)
+            user = self.db.get_user_by_username(user[USERNAME])
+            if user:
+                return user.get(USER_ID, None)
         return None
 
     def logout(self):
@@ -83,16 +87,5 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
-        (user_password, *_) = user[PASSWORD]
+        user_password = user[PASSWORD]
         return check_password_hash(user_password, password)
-
-    def _generate_token(self, user) -> str:
-        """
-        Generates a session token for the user.
-        Returns:
-        str: user session token
-        """
-        user_id = user.get(USER_ID) if isinstance(user, dict) else user[0]
-        if user_id is None:
-            raise ValueError("User must have user_id to generate token")
-        return create_access_token(identity=user_id)

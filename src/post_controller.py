@@ -32,17 +32,7 @@ class PostController:
         """Returns a list of all posts in the database"""
 
         # for each post insert the id into the json so the entire object is represented in a json
-        posts = self.db.get_all_posts()
-
-        json_posts = []
-        for id, post in posts:
-            print(post)
-            print(isinstance(post, str))
-            print(id)
-            new_post = post
-            post[POST_ID] = id
-            json_posts.append(post)
-        return json_posts
+        return self.db.get_all_posts()
 
     def get_post(self, date) -> dict:
         """Returns a specific post from the database"""

@@ -13,6 +13,8 @@ RUN pip install gunicorn
 COPY src/ ./src/
 COPY app.py .
 COPY templates/ ./templates/
+COPY database.db .
+COPY images/ ./images/
 
 EXPOSE 5000
 

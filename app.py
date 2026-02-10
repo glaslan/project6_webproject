@@ -2,6 +2,7 @@
 import os
 from datetime import timedelta
 from uuid import uuid4
+import traceback
 
 from flask import (
     Flask,
@@ -15,7 +16,6 @@ from flask import (
     send_from_directory,
 )
 from flask_jwt_extended import JWTManager
-from flask_jwt_extended.utils import decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from src.constants import (
@@ -52,9 +52,6 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=12)
 os.makedirs(os.path.join(APP_DIR, "images"), exist_ok=True)
 
 jwt = JWTManager(app)
-
-# Controllers
-db = Database(DATABASE_PATH)
 
 
 def _unwrap(v):
@@ -106,18 +103,10 @@ def _normalise_post(post: dict | None) -> dict | None:
 
 def get_current_user_id() -> int | None:
     """
-    Gets the current user ID from the session token
+    Gets the current user ID from the session
     Returns:    The current user ID, or None if the token is invalid or not present
     """
-    token = session.get("access_token")
-    if not token:
-        return None
-    try:
-        decoded_token = decode_token(token)
-        return decoded_token.get("sub")
-    except Exception as e:
-        print(f"Error decoding token: {e}")
-        return None
+    return session.get(USER_ID)
 
 
 def get_current_user() -> dict | None:
@@ -125,6 +114,7 @@ def get_current_user() -> dict | None:
     Gets the current user from the database using the user ID from the session token
     Returns:    The current user dictionary, or None if the user is not found or the token is invalid
     """
+    db = Database(DATABASE_PATH)
     uid = get_current_user_id()
     if uid is None:
         return None
@@ -141,7 +131,9 @@ def home():
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
 
+    db = Database(DATABASE_PATH)
     posts = PostController(DATABASE_PATH)
+    auth = AuthController(DATABASE_PATH)
 
     user = get_current_user()
 
@@ -193,6 +185,7 @@ def home():
         except Exception:
             p["author_username"] = None
 
+    print(auth.db.get_user_by_username("user"))
     return render_template("html/home.html", user=get_current_user(), posts=all_posts)
 
 
@@ -224,9 +217,9 @@ def register():
             )
             return redirect(url_for("register"))
 
-        token = auth.login(potential_new_user)
-        if token:
-            session["access_token"] = token
+        user_id = auth.login(potential_new_user)
+        if user_id:
+            session[USER_ID] = user_id
 
         flash("Account created successfully.", "success")
         return redirect(url_for("home"))
@@ -258,9 +251,10 @@ def login():
         username = (request.form.get(USERNAME) or "").strip()
         password = request.form.get(PASSWORD) or ""
 
-        token = auth.login({USERNAME: username, PASSWORD: password})
-        if token:
-            session["access_token"] = token
+        user_id = auth.login({USERNAME: username, PASSWORD: password})
+        print(f"user_id: {user_id}")
+        if user_id:
+            session[USER_ID] = user_id
             flash("Login successful", "success")
             return redirect(url_for("home"))
         else:
@@ -277,6 +271,7 @@ def profile():
     template: The profile page html template, with the current user (if logged in) and their posts
     """
 
+    db = Database(DATABASE_PATH)
     auth = AuthController(DATABASE_PATH)
     posts = PostController(DATABASE_PATH)
 
@@ -304,7 +299,7 @@ def profile():
         action = request.form.get("action")
 
         if action == "logout":
-            session.pop("access_token", None)
+            session.pop(USER_ID, None)
             flash("Logged out.", "success")
 
             return redirect(url_for("home"))
@@ -490,7 +485,7 @@ def profile():
             ok = db.delete_user(str(user[USER_ID]))
             if ok:
                 db.connection.commit()
-                session.pop("access_token", None)
+                session.pop(USER_ID, None)
             return jsonify({"ok": ok, "deleted": "user"}), (200 if ok else 400)
 
         return jsonify({"ok": False, "error": "unknown type"}), 400
