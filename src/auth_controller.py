@@ -49,8 +49,11 @@ class AuthController:
         str: user_id on successful login
         None: login failed
         """
-        print(user)
-        if self._verify_password(user[USERNAME], user[PASSWORD]):
+        if type(user[PASSWORD]) is tuple:
+            (user_password, *_) = user[PASSWORD]
+        else:
+            user_password = user[PASSWORD]
+        if self._verify_password(user[USERNAME], user_password):
             # Retrieve full user data from database for token generation
             user = self.db.get_user_by_username(user[USERNAME])
             if user:
@@ -87,5 +90,9 @@ class AuthController:
         user = self.db.get_user_by_username(username)
         if user is None:
             return False
-        user_password = user[PASSWORD]
+        if type(user["password"]) is tuple:
+            (user_password, *_) = user["password"]
+        else:
+            user_password = user["password"]
         return check_password_hash(user_password, password)
+
