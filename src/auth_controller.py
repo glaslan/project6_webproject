@@ -5,8 +5,8 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from src.DatabaseAccessLayer import Database
-from src.constants import *
+from DatabaseAccessLayer import Database
+from constants import *
 
 
 class AuthController:

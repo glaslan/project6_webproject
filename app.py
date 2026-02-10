@@ -49,9 +49,6 @@ jwt = JWTManager(app)
 
 # Controllers
 db = Database(DATABASE_PATH)
-auth = AuthController(db)
-posts = PostController(db)
-
 
 def _unwrap(v):
     return v[0] if isinstance(v, tuple) and len(v) == 1 else v
@@ -136,6 +133,7 @@ def home():
     Default route for the home page, also handles post creation
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
+
     user = get_current_user()
 
     if request.method == "POST":
@@ -197,7 +195,7 @@ def register():
     Returns:
     template: The registration page html template, with the current user (if logged in)
     """
-
+    
     if request.method == "OPTIONS":
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"
@@ -231,6 +229,7 @@ def login():
     Returns:
     template: The login page html template, with the current user (if logged in)
     """
+    
     if request.method == "OPTIONS":
         resp = app.make_response(("", 204))
         resp.headers["Allow"] = "GET, POST, OPTIONS"

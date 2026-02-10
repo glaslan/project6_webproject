@@ -1,7 +1,7 @@
 import sqlite3 as sql
 import datetime
 
-from src.constants import USER_ID, POST_ID, USERNAME, PASSWORD, IMAGE_EXT, CONTENT, DATE
+from constants import USER_ID, POST_ID, USERNAME, PASSWORD, IMAGE_EXT, CONTENT, DATE
 
 
 class Database:
