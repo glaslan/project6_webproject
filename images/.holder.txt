@@ -1,0 +1,1 @@
+Allows the images folder to be pushed.
