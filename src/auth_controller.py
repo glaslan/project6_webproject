@@ -5,17 +5,44 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from DatabaseAccessLayer import Database
-from constants import *
+from src.DatabaseAccessLayer import Database
+from src.constants import *
 
 
 class AuthController:
-    """Auth controller class"""
+    """Auth controller class meant to handle user sessions and authentication"""
 
     min_password_length = 8
 
-    def __init__(self, database_path):
-        self.db = Database(database_path)
+    def __init__(self, database: Database) -> None:
+        """
+        Constructor for the AuthController class
+
+        Parameters:
+            database (Database): the database object to use for authentication
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        self.db = database
+    
+    def __del__(self) -> None:
+        """
+        Destructor for the AuthController class, this will close the connection to the database
+
+        Parameters:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        self.db.close()
 
     def register(self, user) -> dict | None:
         """
