@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
 # Copy application code
+COPY src/ .
 COPY app.py .
 COPY templates/ ./templates/
 
