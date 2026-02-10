@@ -58,7 +58,6 @@ jwt = JWTManager(app)
 db = Database(DATABASE_PATH)
 
 
-
 def _unwrap(v):
     return v[0] if isinstance(v, tuple) and len(v) == 1 else v
 
