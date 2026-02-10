@@ -1,7 +1,7 @@
 import sqlite3 as sql
 import datetime
 
-from constants import *
+from src.constants import USER_ID, POST_ID, USERNAME, PASSWORD, IMAGE_EXT, CONTENT, DATE
 
 
 class Database:
@@ -48,7 +48,7 @@ class Database:
 
         Parameters:
             user (dict): a dictionary containing the json information of the
-                         user to be insereted
+                         user to be inserted
 
         Returns:
             bool: if user was successfully inserted or not
