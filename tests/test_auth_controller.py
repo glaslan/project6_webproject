@@ -27,7 +27,7 @@ class TestAuthController:
         (password, *_) = user_in_db["password"]
         print(password)
         print(type(password))
-        assert check_password_hash(password, user['password'])
+        assert check_password_hash(password, user["password"])
 
     def test_login(self, auth_controller):
         user = {
