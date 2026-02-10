@@ -27,13 +27,12 @@ from constants import (
     IMAGE_EXT,
     CONTENT,
     DATE,
-
     GET,
     PUT,
     POST,
     PATCH,
     DELETE,
-    OPTIONS
+    OPTIONS,
 )
 from database_access_layer import Database
 from auth_controller import AuthController
@@ -217,10 +216,7 @@ def register():
         username = (request.form.get(USERNAME) or "").strip()
         password = request.form.get(PASSWORD) or ""
 
-        potential_new_user = {
-            USERNAME: username,
-            PASSWORD: password
-        }
+        potential_new_user = {USERNAME: username, PASSWORD: password}
         created = auth.register(potential_new_user)
         if not created:
             flash(
