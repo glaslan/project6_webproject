@@ -24,9 +24,7 @@ class TestAuthController:
         assert user_in_db is not None
         print(user_in_db)
         assert user_in_db["username"] == user["username"]
-        assert user_in_db["password"] == generate_password_hash(
-            user["password"]
-        )
+        assert user_in_db["password"] == generate_password_hash(user["password"])
 
     def test_login(self, auth_controller):
         user = {

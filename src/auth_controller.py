@@ -28,7 +28,7 @@ class AuthController:
             None
         """
         self.db = database
-    
+
     def __del__(self) -> None:
         """
         Destructor for the AuthController class, this will close the connection to the database

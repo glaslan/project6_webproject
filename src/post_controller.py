@@ -6,8 +6,8 @@ from werkzeug.utils import secure_filename
 from DatabaseAccessLayer import Database
 from constants import *
 
-UPLOAD_FOLDER = './images/'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+UPLOAD_FOLDER = "./images/"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 class PostController:
@@ -93,9 +93,10 @@ class PostController:
         return formatted_post_date
 
     def allowed_file(filename) -> bool:
-        """ Check if the uploaded image has an acceptable extension """
-        return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        """Check if the uploaded image has an acceptable extension"""
+        return (
+            "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+        )
 
     def upload_image(self, file, post_id) -> bool:
         """
@@ -104,16 +105,14 @@ class PostController:
         # get image content
         # change filename to post_id
         # save the image in the images folder
-        if file.filename == '':
-            flash('No selected file')
+        if file.filename == "":
+            flash("No selected file")
             return False
         if file and allowed_file(file.filename):
-            _, extension = filename.rsplit('.', 1)
-            filename = str(post_id) + '.' + extension
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            _, extension = filename.rsplit(".", 1)
+            filename = str(post_id) + "." + extension
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             return True
-
-
 
 
 db = Database("test.db")
