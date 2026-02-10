@@ -1,0 +1,87 @@
+# ---------------------------
+# Project / Output
+# ---------------------------
+PROJECT_NAME           = "Chat Board Website"
+OUTPUT_DIRECTORY       = ../Downloads/Y2KDocs
+RECURSIVE              = YES
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = .
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+
+# Make HTML feel more complete
+DISABLE_INDEX          = NO
+GENERATE_TREEVIEW      = YES
+HTML_DYNAMIC_MENUS     = YES
+
+# ---------------------------
+# Input (Python)
+# ---------------------------
+INPUT                  = .
+INPUT                  = . mainpage.dox
+FILE_PATTERNS          = *.py
+EXCLUDE                = venv .venv __pycache__ docs/doxygen .git node_modules
+
+EXTENSION_MAPPING      = py=Python
+OPTIMIZE_OUTPUT_JAVA   = YES
+
+# ---------------------------
+# Extraction / Detail
+# ---------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+
+# Include "undocumented" members too
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+HIDE_FRIEND_COMPOUNDS  = NO
+
+# Better source browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+# If you want docstrings to appear even if brief
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = NO
+MULTILINE_CPP_IS_BRIEF = NO
+
+# ---------------------------
+# Diagrams (Graphviz)
+# ---------------------------
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 0
+
+# Class/collaboration diagrams
+CLASS_DIAGRAMS         = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+
+# Call graphs (can be heavy)
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# Other useful graphs
+DIRECTORY_GRAPH        = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = YES
+
+# Make diagrams bigger/clearer
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_GRAPH_MAX_NODES    = 100
+MAX_DOT_GRAPH_DEPTH    = 4
+
+# Layout tuning
+DOT_TRANSPARENT        = YES
+DOT_MULTI_TARGETS      = YES
+
+# If you want clearer arrows/structure:
+GRAPHICAL_HIERARCHY    = YES

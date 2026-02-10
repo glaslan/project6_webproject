@@ -1,0 +1,114 @@
+/** @mainpage Chat Board Website
+
+@section overview Overview
+This project is a lightweight web forum / imageboard-style application built using **Python + Flask**.
+It focuses on a deliberately retro **Y2K / early-2000s** aesthetic (table-based layout, classic colors, and minimal UI),
+while still providing modern web-server behavior such as session-based authentication and support for multiple HTTP verbs.
+
+The application is structured around a small set of UI routes (pages) and controller/database components that provide
+authentication and post management.
+
+@section architecture Architecture Summary
+The codebase is divided into three main responsibilities:
+
+@subsection web_layer Web Layer (Flask Routes)
+The Flask application (`app.py`) defines the primary website routes and request handlers:
+- **Home**: renders the feed and handles new post submission.
+- **Login / Register**: account creation and authentication.
+- **Profile**: user account + user-owned post management; also hosts PUT/PATCH/DELETE verb handling for rubric requirements.
+
+Routes are primarily designed for browser interaction (GET/POST) while also supporting API-style operations
+(PUT/PATCH/DELETE).
+
+@subsection controller_layer Controllers
+Controllers encapsulate application logic and act as a bridge between Flask routes and persistence:
+- **AuthController**: handles registration and login behavior.
+  - Creates secure password hashes.
+  - Generates an access token for the session (JWT-based approach).
+- **PostController**: handles creating and deleting posts.
+
+Keeping logic in controllers helps routes stay thin and keeps the application easier to maintain.
+
+@subsection persistence_layer Persistence (Database Access Layer)
+The **DatabaseAccessLayer** (DAL) is responsible for interacting with SQLite:
+- Users are stored in a `users` table: `(user_id INTEGER PRIMARY KEY, json TEXT)`
+- Posts are stored in a `posts` table: `(post_id INTEGER PRIMARY KEY, json TEXT)`
+
+User and post records are stored as JSON strings inside SQLite. Data is extracted using SQLite JSON functions
+(e.g., `json_extract`, `json_set`) to fetch and update fields like:
+- username
+- password (hashed)
+- content
+- image extension
+- post date/time
+
+This makes it easy to add new fields without redesigning the table schema, at the cost of more complex queries.
+
+@section features Features
+@subsection feature_auth Authentication
+- User registration creates a user record containing a username and a hashed password.
+- User login validates credentials and stores an access token in the session.
+- Login state is used to gate actions such as post creation and account management.
+
+@subsection feature_posts Posts
+- Users can create posts (optionally with an image extension recorded).
+- The home page lists all posts for viewing.
+- Users can delete their own posts from their profile page.
+
+@subsection feature_verbs HTTP Verb Coverage
+To satisfy the server requirements, the application provides at least one route handling each method:
+- **GET**: page rendering and content retrieval
+- **POST**: form submissions (login, registration, new post, logout)
+- **PUT**: full resource replacement actions (e.g., updating account info via JSON payload)
+- **PATCH**: partial updates (e.g., changing username or password)
+- **DELETE**: deleting resources (account deletion or post deletion)
+- **OPTIONS**: explicit allow-list responses for preflight / demonstration
+
+@section ui UI Style Guide
+The interface intentionally uses a retro design inspired by early forums:
+- Table-based layout
+- Bold header bars
+- Minimal graphics
+- Clear separation between navigation, sidebar, and content feed
+- Fast-loading pages and plain HTML rendering
+
+Templates are kept consistent across pages so the site feels cohesive.
+
+@section setup Setup & Running
+@subsection prereqs Prerequisites
+- Python 3.x
+- Flask and related dependencies
+- SQLite (built into Python standard library)
+
+@subsection run Running the Application
+1. Install dependencies (example):
+   @code
+   pip install -r requirements.txt
+   @endcode
+
+2. Run the Flask server:
+   @code
+   docker compose up --build
+   @endcode
+
+3. Open the site in the browser:
+   - http://127.0.0.1:4000/
+
+The database file is created automatically on first run if it does not exist.
+
+@section docs Documentation Generation (Doxygen)
+This project supports Doxygen documentation generation for:
+- Module and function docstrings
+- Class documentation
+- Relationship and call diagrams (when Graphviz is installed)
+
+Typical workflow:
+1. Ensure `doxygen` is installed and on PATH.
+2. Ensure `dot` (Graphviz) is installed and on PATH.
+3. Run:
+   @code
+   doxygen Doxyfile
+   @endcode
+4. Open:
+   `docs/doxygen/html/index.html`
+*/
