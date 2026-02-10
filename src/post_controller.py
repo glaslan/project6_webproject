@@ -3,8 +3,8 @@ from flask import jsonify
 from uuid import uuid4
 from werkzeug.utils import secure_filename
 
-from database_access_layer import Database
-from constants import *
+from src.database_access_layer import Database
+from src.constants import *
 
 UPLOAD_FOLDER = "./images/"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}

@@ -18,7 +18,7 @@ from flask_jwt_extended import JWTManager
 from flask_jwt_extended.utils import decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from constants import (
+from src.constants import (
     DATABASE_PATH,
     USER_ID,
     USERNAME,
@@ -34,9 +34,9 @@ from constants import (
     DELETE,
     OPTIONS,
 )
-from database_access_layer import Database
-from auth_controller import AuthController
-from post_controller import PostController
+from src.database_access_layer import Database
+from src.auth_controller import AuthController
+from src.post_controller import PostController
 
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(APP_DIR, "images")

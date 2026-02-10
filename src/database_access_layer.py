@@ -1,7 +1,7 @@
 import sqlite3 as sql
 import datetime
 
-from constants import *
+from src.constants import *
 
 
 class Database:
@@ -74,10 +74,8 @@ class Database:
                 self.connection.commit()
                 print("heya")
             else:
-                print("wassup")
                 self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
                 self.connection.commit()
-                print("wassup")
             return True
         except sql.IntegrityError:
             print("Integrity Violated")
