@@ -1,7 +1,7 @@
 import sqlite3 as sql
 import datetime
 
-from src.constants import USER_ID, POST_ID, USERNAME, PASSWORD, IMAGE_EXT, CONTENT, DATE
+from constants import *
 
 
 class Database:
@@ -38,6 +38,7 @@ class Database:
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)"
         )
+        self.connection.commit()
 
     def __del__(self):
         self.close()
@@ -48,7 +49,7 @@ class Database:
 
         Parameters:
             user (dict): a dictionary containing the json information of the
-                         user to be inserted
+                         user to be insereted
 
         Returns:
             bool: if user was successfully inserted or not
@@ -66,13 +67,20 @@ class Database:
         # insert the user_id with the user if it was passed (primarliy for the update user function)
         try:
             if user_id:
+                print("heya")
                 self.connection.execute(
                     "INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json])
                 )
+                self.connection.commit()
+                print("heya")
             else:
+                print("wassup")
                 self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+                self.connection.commit()
+                print("wassup")
             return True
         except sql.IntegrityError:
+            print("Integrity Violated")
             return False
 
     def insert_post(self, post: dict) -> bool:
@@ -118,6 +126,7 @@ class Database:
             self.connection.execute(
                 "INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json])
             )
+            self.connection.commit()
             return True
         except sql.IntegrityError:
             return False
@@ -354,6 +363,7 @@ class Database:
                 "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
                 ([content, "%" + image + "%"]),
             )
+            self.connection.commit()
             return True
         except sql.IntegrityError:
             return False
@@ -396,12 +406,11 @@ class Database:
         """
 
         try:
-            return (
-                self.connection.execute(
-                    "DELETE FROM users WHERE user_id LIKE ?", (["%" + user_id + "%"])
-                )
-                is not None
+            data = self.connection.execute(
+                "DELETE FROM users WHERE user_id LIKE ?", (["%" + user_id + "%"])
             )
+            self.connection.commit()
+            return data is not None
         except Exception:
             return False
 
@@ -417,13 +426,12 @@ class Database:
             bool: true if the deletion was successful, false if not
         """
         try:
-            return (
-                self.connection.execute(
-                    "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
-                    (["%" + user_id + "%", "%" + date + "%"]),
-                )
-                is not None
+            data = self.connection.execute(
+                "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
+                (["%" + user_id + "%", "%" + date + "%"]),
             )
+            self.connection.commit()
+            return data is not None
         except Exception:
             return False
 
@@ -458,3 +466,5 @@ class Database:
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)"
         )
+
+        self.connection.commit()

@@ -5,8 +5,8 @@ from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
-from src.DatabaseAccessLayer import Database
-from src.constants import *
+from database_access_layer import Database
+from constants import *
 
 
 class AuthController:
@@ -14,38 +14,10 @@ class AuthController:
 
     min_password_length = 8
 
-    def __init__(self, database: Database) -> None:
+    def __init__(self, database_path: str):
+        self.db = Database(database_path)
 
-        """
-        Constructor for the AuthController class, this will set the database connection to the passed in Database object
-
-        Parameters:
-            database (Database): the database object to use for authentication
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        self.db = database
-    
-    def __del__(self) -> None:
-        """
-        Destructor for the AuthController class, this will close the connection to the database
-
-        Parameters:
-            None
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        self.db.close()
-
-    def register(self, user) -> dict | None:
+    def register(self, user: dict) -> dict | None:
         """
         Registers a new user given the user's information.
         Returns:

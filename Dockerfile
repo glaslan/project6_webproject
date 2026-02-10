@@ -1,5 +1,7 @@
 FROM python:3.13.3-slim-bookworm
 
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 # Install dependencies
@@ -8,8 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
 # Copy application code
+COPY src/ .
 COPY app.py .
 COPY templates/ ./templates/
+COPY src/ .
 
 EXPOSE 5000
 

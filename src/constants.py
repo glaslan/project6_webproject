@@ -9,3 +9,10 @@ DATE = "date"
 
 DATABASE_PATH = "database.db"
 TEST_DATABASE_PATH = "test.db"
+
+GET = "GET"
+POST = "POST"
+PATCH = "PATCH"
+PUT = "PUT"
+OPTIONS = "OPTIONS"
+DELETE = "DELETE"
