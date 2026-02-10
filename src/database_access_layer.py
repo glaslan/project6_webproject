@@ -102,7 +102,7 @@ class Database:
         if image_ext is None:
             image_ext = "NONE"
         user_id = validate_value(post.get(USER_ID))
-        date = str(datetime.datetime.now()) 
+        date = str(datetime.datetime.now())
 
         # construct the json object
         json = (
@@ -383,7 +383,9 @@ class Database:
         if old_user.get(USER_ID) != edited_user.get(USER_ID):
             return False
 
-        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(edited_user)
+        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(
+            edited_user
+        )
 
     def delete_user(self, user_id: int) -> bool:
         """
@@ -462,6 +464,7 @@ class Database:
         )
 
         self.connection.commit()
+
 
 def validate_value(value):
 
