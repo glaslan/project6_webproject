@@ -227,6 +227,26 @@ def register():
     return render_template("html/register.html")
 
 
+@app.route("/logout", methods=[GET, POST])
+def logout():
+    """
+    Logs the user out and clears their session.
+    Returns:
+        redirect: Redirects to home page for browser requests
+        json: JSON response for API requests
+    """
+    auth = AuthController(DATABASE_PATH)
+
+    session.pop(USER_ID, None)
+    result = auth.logout()
+
+    if request.headers.get("Accept") == "application/json":
+        return jsonify(result)
+
+    flash(result["data"]["message"].capitalize(), "success")
+    return redirect(url_for("home"))
+
+
 @app.route("/login", methods=[GET, POST, OPTIONS])
 def login():
     """

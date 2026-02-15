@@ -24,7 +24,10 @@ class TestAuthController:
         assert user_in_db is not None
         print(user_in_db)
         assert user_in_db["username"] == self.user["username"]
-        (password, *_) = user_in_db["password"]
+        if type(user_in_db["password"]) is tuple:
+            (password, *_) = user_in_db["password"]
+        else:
+            password = user_in_db["password"]
         print(password)
         print(type(password))
         assert check_password_hash(password, self.user["password"])
@@ -38,7 +41,7 @@ class TestAuthController:
         and a message indicating logout success after a user has been logged in.
         """
         auth_controller.login(self.user)
-        assert auth_controller.logout(self.user) == {
+        assert auth_controller.logout() == {
             "result": 200,
             "data": {"message": "logout success"},
         }
