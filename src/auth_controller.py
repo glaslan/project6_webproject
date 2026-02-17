@@ -2,8 +2,6 @@
 
 
 import traceback
-from flask import jsonify
-from flask_login import logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
@@ -57,17 +55,16 @@ class AuthController:
             # Retrieve full user data from database for token generation
             user = self.db.get_user_by_username(user[USERNAME])
             if user:
-                return user.get(USER_ID, None)
+                return user[USER_ID]
         return None
 
     def logout(self):
         """
         Attempt to log the user out of the site.
         Returns:
-        json: message indicating logout
+        dict: message indicating logout
         """
-        logout_user()
-        return jsonify({"result": 200, "data": {"message": "logout success"}})
+        return {"result": 200, "data": {"message": "logout success"}}
 
     def _hash_password(self, password) -> str:
         """
