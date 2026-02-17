@@ -5,7 +5,7 @@ PASSWORD = "password"
 IMAGE_EXT = "image_ext"
 CONTENT = "content"
 DATE = "date"
-
+IMAGESDIR = "/images/"
 
 DATABASE_PATH = "database.db"
 TEST_DATABASE_PATH = "test.db"
