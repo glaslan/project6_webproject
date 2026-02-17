@@ -119,7 +119,8 @@ class Database:
         # insert the post into the databse
         try:
             self.connection.execute(
-                "INSERT INTO posts (post_id, json) VALUES (?, ?)", ([str(post_id), json])
+                "INSERT INTO posts (post_id, json) VALUES (?, ?)",
+                ([str(post_id), json]),
             )
             self.connection.commit()
             return True
@@ -383,7 +384,9 @@ class Database:
         if old_user.get(USER_ID) != edited_user.get(USER_ID):
             return False
 
-        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(edited_user)
+        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(
+            edited_user
+        )
 
     def delete_user(self, user_id: int) -> bool:
         """

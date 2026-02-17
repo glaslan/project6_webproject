@@ -177,7 +177,12 @@ def home():
     all_posts = posts.get_posts()
     all_posts = [_normalise_post(p) for p in all_posts]
 
-    return render_template("html/home.html", user=get_current_user(), posts=all_posts, post_controller=posts)
+    return render_template(
+        "html/home.html",
+        user=get_current_user(),
+        posts=all_posts,
+        post_controller=posts,
+    )
 
 
 @app.route("/register", methods=[GET, POST, OPTIONS])
@@ -308,7 +313,6 @@ def profile():
             method = DELETE
 
     print(method)
-        
 
     if not user:
         if method == GET:
@@ -405,8 +409,6 @@ def profile():
             author = _unwrap(old_post.get(USER_ID))
             if str(author) != str(user[USER_ID]):
                 return jsonify({"ok": False, "error": "forbidden"}), 403
-
-
 
             edited_post = old_post.copy()
             edited_post[CONTENT] = new_content

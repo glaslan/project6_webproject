@@ -29,7 +29,7 @@ class PostController:
         if post.get(IMAGE_EXT) == None:
             post[IMAGE_EXT] = "NONE"
 
-        post[DATE] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        post[DATE] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return self.db.insert_post(post)
 
     def get_posts(self) -> list[dict]:
@@ -37,7 +37,7 @@ class PostController:
 
         # for each post insert the id into the json so the entire object is represented in a json
         return self.db.get_all_posts()
-    
+
     def sort_posts(self, posts: list):
         """
         TODO docs
@@ -55,7 +55,7 @@ class PostController:
         """Returns a specific post from the database"""
 
         return self.db.get_post_by_date(date)
-    
+
     def get_post_by_id(self, id) -> dict:
         """Returns a specific post from the database"""
 
@@ -92,7 +92,6 @@ class PostController:
 
     def get_username(self, post: dict):
         return self.db.get_user_by_id(post.get(USER_ID)).get(USERNAME)
-    
 
     def allowed_file(filename) -> bool:
         """Check if the uploaded image has an acceptable extension"""
