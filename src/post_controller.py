@@ -112,7 +112,7 @@ class PostController:
         if file and allowed_file(file.filename):
             _, extension = filename.rsplit(".", 1)
             filename = str(post_id) + "." + extension
-            #file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            # file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             return True
 
 
