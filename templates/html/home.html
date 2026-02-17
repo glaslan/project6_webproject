@@ -166,7 +166,9 @@
                 {% if post_controller.get_filename(p) %}
                   <br>
                   <div class="small"><b>Image:</b></div>
-                  <img src="/get_image/{{post_controller.get_filename(p)}}" alt="Post Image" style="max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 5px;" loading="lazy">
+                  <img src="/get_image/{{post_controller.get_filename(p)}}" 
+                       alt="Post Image" 
+                       style="max-width: 25%; height: 25%; border: 1px solid #ccc; margin-top: 5px;" loading="lazy">
                 {% endif %}
               </div>
               {% endfor %}
