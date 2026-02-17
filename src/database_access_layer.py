@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import datetime
+import traceback
 
 from src.constants import *
 
@@ -36,7 +37,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)"
         )
         self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)"
+            "CREATE TABLE IF NOT EXISTS posts (post_id TEXT PRIMARY KEY, json TEXT)"
         )
         self.connection.commit()
 
@@ -99,10 +100,8 @@ class Database:
         post_id = validate_value(post.get(POST_ID))
         content = validate_value(post.get(CONTENT))
         image_ext = validate_value(post.get(IMAGE_EXT))
-        if image_ext is None:
-            image_ext = "NONE"
+        date = validate_value(post.get(DATE))
         user_id = validate_value(post.get(USER_ID))
-        date = str(datetime.datetime.now())
 
         # construct the json object
         json = (
@@ -120,11 +119,12 @@ class Database:
         # insert the post into the databse
         try:
             self.connection.execute(
-                "INSERT INTO posts (post_id, json) VALUES (?, ?)", ([post_id, json])
+                "INSERT INTO posts (post_id, json) VALUES (?, ?)", ([str(post_id), json])
             )
             self.connection.commit()
             return True
         except sql.IntegrityError:
+            traceback.print_exc()
             return False
 
     def get_user_by_username(self, username: str) -> dict | None:
@@ -266,19 +266,19 @@ class Database:
         # extract the individual values of each post
         user_id = self.connection.execute(
             "SELECT json_extract(json, '$.user_id') FROM posts WHERE post_id = ?",
-            [post_id],
+            [str(post_id)],
         ).fetchone()
         image_ext = self.connection.execute(
             "SELECT json_extract(json, '$.image_ext') FROM posts WHERE post_id = ?",
-            [post_id],
+            [str(post_id)],
         ).fetchone()
         content = self.connection.execute(
             "SELECT json_extract(json, '$.content') FROM posts WHERE post_id = ?",
-            [post_id],
+            [str(post_id)],
         ).fetchone()
         date = self.connection.execute(
             "SELECT json_extract(json, '$.date') FROM posts WHERE post_id = ?",
-            [post_id],
+            [str(post_id)],
         ).fetchone()
 
         # put the post object together if it exists in the database
@@ -353,15 +353,15 @@ class Database:
         try:
             self.connection.execute(
                 "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                ([content, "%" + str(user_id) + "%"]),
+                [content, "%" + str(user_id) + "%"],
             )
             self.connection.execute(
                 "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                ([content, "%" + image + "%"]),
+                [content, "%" + image + "%"],
             )
             self.connection.commit()
             return True
-        except sql.IntegrityError:
+        except Exception:
             return False
 
     def update_user(self, old_user: dict, edited_user: dict) -> bool:
@@ -383,9 +383,7 @@ class Database:
         if old_user.get(USER_ID) != edited_user.get(USER_ID):
             return False
 
-        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(
-            edited_user
-        )
+        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(edited_user)
 
     def delete_user(self, user_id: int) -> bool:
         """
@@ -403,7 +401,7 @@ class Database:
 
         try:
             data = self.connection.execute(
-                "DELETE FROM users WHERE user_id LIKE ?", (["%" + str(user_id) + "%"])
+                "DELETE FROM users WHERE user_id LIKE ?", ["%" + str(user_id) + "%"]
             )
             self.connection.commit()
             return data is not None
@@ -424,7 +422,7 @@ class Database:
         try:
             data = self.connection.execute(
                 "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
-                (["%" + str(user_id) + "%", "%" + date + "%"]),
+                ["%" + str(user_id) + "%", "%" + date + "%"],
             )
             self.connection.commit()
             return data is not None
@@ -473,3 +471,6 @@ def validate_value(value):
     if isinstance(value, tuple):
         return value[0]
     return value
+
+
+db = Database(DATABASE_PATH)

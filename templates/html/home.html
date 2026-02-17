@@ -155,7 +155,7 @@
               <div class="post-box">
                 <div><b>{{ p["title"] }}</b></div>
                 <div class="post-meta">
-                  By <b>{{ p["username"] }}</b> &nbsp;|&nbsp; {{ p["created_at_display"] }}
+                  By <b>{{ post_controller.get_username(p) }}</b> &nbsp;|&nbsp; {{ p["date"] }}
                   {% if p["is_owner"] %}
                     &nbsp;|&nbsp; <a href="/profile">Manage</a>
                   {% endif %}

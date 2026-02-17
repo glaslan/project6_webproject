@@ -114,13 +114,13 @@ def get_current_user() -> dict | None:
     Gets the current user from the database using the user ID from the session token
     Returns:    The current user dictionary, or None if the user is not found or the token is invalid
     """
-    db = Database(DATABASE_PATH)
+    auth = AuthController(DATABASE_PATH)
     uid = get_current_user_id()
     if uid is None:
         return None
-    u = db.get_user_by_id(uid)
-    u = _normalise_user(u)
-    return u
+    user = auth.db.get_user_by_id(uid)
+    user = _normalise_user(user)
+    return user
 
 
 @app.route("/", methods=[GET, POST])
@@ -147,7 +147,7 @@ def home():
             flash("Post content cannot be empty", "error")
             return redirect(url_for("home"))
 
-        post_id = uuid4().int & 0x7FFFFFFFFFFFFFFF  # Generate a random post ID
+        post_id = posts.generate_uuid()
 
         image_ext = None
         file = request.files.get("image")
@@ -177,16 +177,7 @@ def home():
     all_posts = posts.get_posts()
     all_posts = [_normalise_post(p) for p in all_posts]
 
-    for p in all_posts:
-        try:
-            author = db.get_user_by_id(_unwrap_sql_value(p.get(USER_ID)))
-            author = _normalise_user(author)
-            p["author_username"] = author[USERNAME] if author else "Unknown"
-        except Exception:
-            p["author_username"] = None
-
-    print(auth.db.get_user_by_username("user"))
-    return render_template("html/home.html", user=get_current_user(), posts=all_posts)
+    return render_template("html/home.html", user=get_current_user(), posts=all_posts, post_controller=posts)
 
 
 @app.route("/register", methods=[GET, POST, OPTIONS])
@@ -283,19 +274,35 @@ def profile():
     user = get_current_user()
     user = _normalise_user(user)
 
+    data = request.get_json(silent=True) or {}
+
+    method = request.method
+    if request.form.get("method"):
+
+        override_method = request.form.get("method")
+        if override_method == "PATCH":
+            method = PATCH
+        elif override_method == "PUT":
+            method = PUT
+        elif override_method == "DELETE":
+            method = DELETE
+
+    print(method)
+        
+
     if not user:
-        if request.method == GET:
+        if method == GET:
             flash("Please log in first.", "error")
             return redirect(url_for("login"))
         return jsonify({"ok": False, "error": "unauthorized"}), 401
 
-    if request.method == GET:
-        all_posts = db.get_all_posts()
+    if method == GET:
+        all_posts = posts.get_posts()
         my_posts = [p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])]
 
         return render_template("html/profile.html", user=user, posts=my_posts)
 
-    if request.method == POST:
+    if method == POST:
         action = request.form.get("action")
 
         if action == "logout":
@@ -310,9 +317,7 @@ def profile():
                 flash("Missing post date.", "error")
                 return redirect(url_for("profile"))
 
-            ok = db.delete_post(str(user[USER_ID]), date)
-            if ok:
-                db.connection.commit()
+            ok = posts.delete_post(str(user[USER_ID]), date)
             flash(
                 "Post deleted." if ok else "Failed to delete post.",
                 "success" if ok else "error",
@@ -322,14 +327,12 @@ def profile():
         flash("Unknown action.", "error")
         return redirect(url_for("profile"))
 
-    data = request.get_json(silent=True) or {}
-
-    if request.method == PATCH:
+    if method == PATCH:
         req_type = (data.get("type") or "user").lower()
 
         if req_type == "user":
-            new_username = data.get(USERNAME)
-            new_password = data.get(PASSWORD)
+            new_username = request.form.get(USERNAME)
+            new_password = request.form.get(PASSWORD)
 
             if not new_username and not new_password:
                 return (
@@ -351,8 +354,6 @@ def profile():
             }
 
             ok = db.update_user(user, edited)
-            if ok:
-                db.connection.commit()
             return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
 
         if req_type == POST:
@@ -363,7 +364,7 @@ def profile():
                     400,
                 )
 
-            old_post = db.get_post_by_id(int(post_id))
+            old_post = posts.get_post_by_id(int(post_id))
             if not old_post:
                 return jsonify({"ok": False, "error": "post not found"}), 404
 
@@ -385,23 +386,28 @@ def profile():
             if str(author) != str(user[USER_ID]):
                 return jsonify({"ok": False, "error": "forbidden"}), 403
 
-            if new_content:
-                db.connection.execute(
-                    "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE post_id = ?",
-                    (new_content, int(post_id)),
-                )
-            if new_image_ext:
-                db.connection.execute(
-                    "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE post_id = ?",
-                    (new_image_ext, int(post_id)),
-                )
 
-            db.connection.commit()
+
+            edited_post = old_post.copy()
+            edited_post[CONTENT] = new_content
+            edited_post[IMAGE_EXT] = new_image_ext
+
+            posts.edit_post(old_post, edited_post, old_post[USER_ID])
+            # if new_content:
+            #     db.connection.execute(
+            #         "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE post_id = ?",
+            #         (new_content, int(post_id)),
+            #     )
+            # if new_image_ext:
+            #     db.connection.execute(
+            #         "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE post_id = ?",
+            #         (new_image_ext, int(post_id)),
+            #     )
             return jsonify({"ok": True, "updated": POST}), 200
 
         return jsonify({"ok": False, "error": "unknown type"}), 400
 
-    if request.method == PUT:
+    if method == PUT:
         req_type = (data.get("type") or "user").lower()
 
         if req_type == "user":
@@ -426,8 +432,6 @@ def profile():
             }
 
             ok = db.update_user(user, edited)
-            if ok:
-                db.connection.commit()
             return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
 
         if req_type == POST:
@@ -451,20 +455,17 @@ def profile():
             if str(author) != str(user[USER_ID]):
                 return jsonify({"ok": False, "error": "forbidden"}), 403
 
-            db.connection.execute(
-                "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE post_id = ?",
-                (content, int(post_id)),
-            )
-            db.connection.execute(
-                "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE post_id = ?",
-                (image_ext, int(post_id)),
-            )
-            db.connection.commit()
+            edited_post = old_post.copy()
+            edited_post[CONTENT] = new_content
+            edited_post[IMAGE_EXT] = new_image_ext
+
+            posts.edit_post(old_post, edited_post, old_post[USER_ID])
+
             return jsonify({"ok": True, "replaced": POST}), 200
 
         return jsonify({"ok": False, "error": "unknown type"}), 400
 
-    if request.method == DELETE:
+    if method == DELETE:
         req_type = (data.get("type") or "user").lower()
 
         if req_type == POST:
@@ -472,9 +473,7 @@ def profile():
             if not date:
                 return jsonify({"ok": False, "error": "DELETE post requires date"}), 400
 
-            ok = db.delete_post(str(user[USER_ID]), date)
-            if ok:
-                db.connection.commit()
+            ok = posts.delete_post(str(user[USER_ID]), date)
             return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
 
         if req_type == "user":
@@ -484,7 +483,6 @@ def profile():
             )
             ok = db.delete_user(str(user[USER_ID]))
             if ok:
-                db.connection.commit()
                 session.pop(USER_ID, None)
             return jsonify({"ok": ok, "deleted": "user"}), (200 if ok else 400)
 

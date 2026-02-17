@@ -53,7 +53,6 @@
           <td class="small">
             <b>Username:</b> {{ user["username"] }}<br>
             <b>User ID:</b> {{ user["user_id"] }}<br>
-            <b>Member Since:</b> {{ user["created_at"] }}<br>
             <b>Password:</b> ********
           </td>
         </tr>
@@ -68,15 +67,16 @@
         <tr bgcolor="#ffffff">
           <td>
             <form method="POST" action="/profile">
-              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="action" value="update" >
+              <input type="hidden" name="method" value="PATCH">
 
               <div class="small"><b>New Username</b></div>
-              <input type="text" name="new_username" size="35" value="{{ user['username'] }}">
+              <input type="text" name="username" size="35" value="{{ user['username'] }}">
 
               <br><br>
 
               <div class="small"><b>New Password</b> (leave blank to keep)</div>
-              <input type="password" name="new_password" size="35">
+              <input type="password" name="password" size="35">
 
               <br><br>
 
@@ -114,6 +114,7 @@
             <br><br>
             <form method="POST" action="/profile">
               <input type="hidden" name="action" value="delete_account">
+              <input type="hidden" name="method" value="DELETE">
               <input class="y2k-btn" type="submit" value="Delete Account">
             </form>
           </td>
@@ -134,7 +135,7 @@
             {% else %}
               {% for p in posts %}
               <div class="post-box">
-                <div><b>{{ p["title"] }}</b></div>
+                <div><b>{{ p["title"] }} | {{ p["date"] }}</b></div>
                 <div class="small">{{ p["created_at_display"] }}</div>
                 <hr>
                 <div style="white-space: pre-wrap;">{{ p["content"] }}</div>
@@ -149,6 +150,7 @@
                 <form method="POST" action="/profile">
                   <input type="hidden" name="action" value="delete_post">
                   <input type="hidden" name="post_id" value="{{ p['post_id'] }}">
+                  <input type="hidden" name="date" value="{{ p['date'] }}">
                   <input class="y2k-btn" type="submit" value="Delete Post">
                 </form>
               </div>

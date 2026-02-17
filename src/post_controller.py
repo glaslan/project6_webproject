@@ -1,7 +1,9 @@
 """ Module for managing posts """
 from flask import jsonify
+from datetime import datetime
 from uuid import uuid4
 from werkzeug.utils import secure_filename
+import datetime
 
 from src.database_access_layer import Database
 from src.constants import *
@@ -24,22 +26,40 @@ class PostController:
     def create_post(self, post: dict) -> bool:
         """Creates a new post in the database"""
 
-        if self.db.insert_post(post):
-            return True
-        return False
+        if post.get(IMAGE_EXT) == None:
+            post[IMAGE_EXT] = "NONE"
+
+        post[DATE] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        return self.db.insert_post(post)
 
     def get_posts(self) -> list[dict]:
         """Returns a list of all posts in the database"""
 
         # for each post insert the id into the json so the entire object is represented in a json
         return self.db.get_all_posts()
+    
+    def sort_posts(self, posts: list):
+        """
+        TODO docs
+        """
+
+        local_posts = posts.copy()
+        sorted_posts = []
+
+        while len(local_posts) is not 0:
+            # TODO
+            pass
+        return sorted_posts
 
     def get_post(self, date) -> dict:
         """Returns a specific post from the database"""
 
-        id, post = self.db.get_post_by_date(date)
-        post[POST_ID] = id
-        return post
+        return self.db.get_post_by_date(date)
+    
+    def get_post_by_id(self, id) -> dict:
+        """Returns a specific post from the database"""
+
+        return self.db.get_post_by_id(id)
 
     def edit_post(self, old_post: dict, edited_post: dict, user_id) -> bool:
         """Edits a specific post in the database"""
@@ -62,25 +82,17 @@ class PostController:
             if self.db.get_post_by_id(uuid) == None:
                 return uuid
 
-    def get_image(self):
+    def get_filename(self, post: dict):
         """
         TODO
         """
-        # not sure how this ones gonna work yet
+        if post[IMAGE_EXT] == "NONE":
+            return None
+        return f"{post[POST_ID]}{post[IMAGE_EXT]}"
 
     def get_username(self, post: dict):
-
         return self.db.get_user_by_id(post.get(USER_ID)).get(USERNAME)
-
-    def get_date(self, post: dict):
-        """
-        Purpose of this is to convert the date stored into the format
-        that will be displayed on the ui
-        """
-
-        post_date = post.get(POST_DATE)
-        formatted_post_date = post_date[:4] + "-" + post_date[4:6] + "-" + post_date[6:]
-        return formatted_post_date
+    
 
     def allowed_file(filename) -> bool:
         """Check if the uploaded image has an acceptable extension"""
