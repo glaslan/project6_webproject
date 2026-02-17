@@ -167,7 +167,7 @@ def home():
             CONTENT: content,
             IMAGE_EXT: f".{image_ext}",
         }
-        
+
         print(post_obj[IMAGE_EXT])
         print(posts.get_filename(post_obj))
 
@@ -188,6 +188,7 @@ def home():
         post_controller=posts,
     )
 
+
 @app.route("/get_image/<filename>")
 def serve_image(filename: str):
     """
@@ -204,8 +205,9 @@ def serve_image(filename: str):
     full_path = os.path.join(UPLOAD_DIR, safe_path)
     if not os.path.isfile(full_path):
         abort(404)
-    
+
     return send_from_directory(UPLOAD_DIR, safe_path)
+
 
 @app.route("/register", methods=[GET, POST, OPTIONS])
 def register():
