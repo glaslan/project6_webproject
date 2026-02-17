@@ -163,10 +163,10 @@
                 <hr>
                 <div style="white-space: pre-wrap;">{{ p["content"] }}</div>
 
-                {% if p["image_filename"] %}
+                {% if post_controller.get_filename(p) %}
                   <br>
                   <div class="small"><b>Image:</b></div>
-                  <img src="/images/{{ p["image_filename"] }}" alt="post image" style="max-width: 420px; border: 2px outset #ffffff;">
+                  <img src="/get_image/{{post_controller.get_filename(p)}}" alt="Post Image" style="max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 5px;" loading="lazy">
                 {% endif %}
               </div>
               {% endfor %}

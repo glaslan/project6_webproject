@@ -15,6 +15,7 @@ from flask import (
     flash,
     send_from_directory,
 )
+from flask import send_from_directory, abort
 from flask_jwt_extended import JWTManager
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -161,11 +162,14 @@ def home():
                 image_ext = None
                 return redirect(url_for("home"))
         post_obj = {
-            POST_ID: int(post_id),
+            POST_ID: str(post_id),
             USER_ID: str(user[USER_ID]),
             CONTENT: content,
-            IMAGE_EXT: image_ext,
+            IMAGE_EXT: f".{image_ext}",
         }
+        
+        print(post_obj[IMAGE_EXT])
+        print(posts.get_filename(post_obj))
 
         ok = posts.create_post(post_obj)
         if ok:
@@ -184,6 +188,24 @@ def home():
         post_controller=posts,
     )
 
+@app.route("/get_image/<filename>")
+def serve_image(filename: str):
+    """
+    Serves an image file from the UPLOAD_DIR, ensuring that the filename is safe and does not allow directory traversal
+    Args:
+        filename: The name of the image file to serve
+    Returns:
+        The image file if it exists and is safe, or a 400/404 error if the filename is invalid or the file does not exist
+    """
+    safe_path = os.path.normpath(filename)
+    if safe_path.startswith("..") or os.path.isabs(safe_path):
+        abort(400)
+
+    full_path = os.path.join(UPLOAD_DIR, safe_path)
+    if not os.path.isfile(full_path):
+        abort(404)
+    
+    return send_from_directory(UPLOAD_DIR, safe_path)
 
 @app.route("/register", methods=[GET, POST, OPTIONS])
 def register():
