@@ -348,7 +348,9 @@ def profile():
         all_posts = posts.get_posts()
         my_posts = [p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])]
 
-        return render_template("html/profile.html", user=user, posts=my_posts, post_controller=posts)
+        return render_template(
+            "html/profile.html", user=user, posts=my_posts, post_controller=posts
+        )
 
     if method == POST:
         action = request.form.get("action")
