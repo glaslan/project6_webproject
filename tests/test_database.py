@@ -38,11 +38,7 @@ class TestDatabase:
         # initialize
         db = Database(TEST_DATABASE_PATH)
         db.reset_tables()
-        user = {
-            USERNAME: "test_user",
-            PASSWORD: "test_password",
-            USER_ID: "1234"
-        }
+        user = {USERNAME: "test_user", PASSWORD: "test_password", USER_ID: "1234"}
 
         # compute
         result1 = db.insert_user(user)
@@ -51,7 +47,7 @@ class TestDatabase:
         # assert
         assert result1 is True
         assert result2 is False
-    
+
     # TEST-DB-FUNC-0003
     def test_insert_post(self):
 
@@ -63,7 +59,7 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test",
             IMAGE_EXT: "NONE",
-            DATE: "2026"
+            DATE: "2026",
         }
 
         # compute
@@ -83,7 +79,7 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test",
             IMAGE_EXT: "NONE",
-            DATE: "2026"
+            DATE: "2026",
         }
 
         # compute
@@ -100,15 +96,11 @@ class TestDatabase:
         # initialize
         db = Database(TEST_DATABASE_PATH)
         db.reset_tables()
-        user = {
-            USERNAME: "test_user",
-            PASSWORD: "test_password",
-            USER_ID: "123"
-        }
+        user = {USERNAME: "test_user", PASSWORD: "test_password", USER_ID: "123"}
 
         # compute
         result1 = db.get_user_by_username(user[USERNAME])
-        
+
         db.insert_user(user)
 
         result2 = db.get_user_by_username(user[USERNAME])
@@ -125,15 +117,11 @@ class TestDatabase:
         # initialize
         db = Database(TEST_DATABASE_PATH)
         db.reset_tables()
-        user = {
-            USERNAME: "test_user",
-            PASSWORD: "test_password",
-            USER_ID: "123"
-        }
+        user = {USERNAME: "test_user", PASSWORD: "test_password", USER_ID: "123"}
 
         # compute
         result1 = db.get_user_by_id(user[USER_ID])
-        
+
         db.insert_user(user)
 
         result2 = db.get_user_by_id(user[USER_ID])
@@ -155,12 +143,12 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test",
             IMAGE_EXT: "NONE",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
 
         # compute
         result1 = db.get_post_by_date(post[DATE])
-        
+
         db.insert_post(post)
 
         result2 = db.get_post_by_date(post[DATE])
@@ -184,12 +172,12 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test",
             IMAGE_EXT: "NONE",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
 
         # compute
         result1 = db.get_post_by_id(post[POST_ID])
-        
+
         db.insert_post(post)
 
         result2 = db.get_post_by_id(post[POST_ID])
@@ -213,19 +201,19 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test1",
             IMAGE_EXT: "NONE",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
         post2 = {
             POST_ID: "987654321",
             USER_ID: "4321",
             CONTENT: "test2",
             IMAGE_EXT: ".png",
-            DATE: "2026-02-16"
+            DATE: "2026-02-16",
         }
 
         # compute
         result1 = db.get_all_posts()
-        
+
         db.insert_post(post1)
         db.insert_post(post2)
 
@@ -257,18 +245,18 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "old",
             IMAGE_EXT: "NONE",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
         new_post = {
             POST_ID: "123456789",
             USER_ID: "1234",
             CONTENT: "edit",
             IMAGE_EXT: ".jpg",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
 
         # compute
-    
+
         db.insert_post(old_post)
         db.update_post(old_post, new_post, old_post[USER_ID])
         result = db.get_post_by_id("123456789")
@@ -286,19 +274,11 @@ class TestDatabase:
         # initialize
         db = Database(TEST_DATABASE_PATH)
         db.reset_tables()
-        old_user = {
-            USERNAME: "old_user",
-            PASSWORD: "old_password",
-            USER_ID: "1234"
-        }
-        new_user = {
-            USERNAME: "new_user",
-            PASSWORD: "new_password",
-            USER_ID: "1234"
-        }
+        old_user = {USERNAME: "old_user", PASSWORD: "old_password", USER_ID: "1234"}
+        new_user = {USERNAME: "new_user", PASSWORD: "new_password", USER_ID: "1234"}
 
         # compute
-    
+
         db.insert_user(old_user)
         db.update_user(old_user, new_user, old_user[USER_ID])
         result = db.get_user_by_id("1234")
@@ -314,14 +294,10 @@ class TestDatabase:
         # initialize
         db = Database(TEST_DATABASE_PATH)
         db.reset_tables()
-        user = {
-            USERNAME: "user",
-            PASSWORD: "password",
-            USER_ID: "1234"
-        }
+        user = {USERNAME: "user", PASSWORD: "password", USER_ID: "1234"}
 
         # compute
-    
+
         db.insert_user(user)
         result1 = db.get_user_by_username("username")
         db.delete_user(user[USER_ID])
@@ -344,11 +320,11 @@ class TestDatabase:
             USER_ID: "1234",
             CONTENT: "test",
             IMAGE_EXT: "NONE",
-            DATE: "2026-02-15"
+            DATE: "2026-02-15",
         }
 
         # compute
-    
+
         db.insert_post(post)
         result1 = db.get_post_by_id(post[POST_ID])
         db.delete_post(post[USER_ID], post[DATE])
@@ -361,5 +337,3 @@ class TestDatabase:
         assert result1[IMAGE_EXT] == "NONE"
         assert result1[CONTENT] == "test"
         assert result2 is None
-
-    
