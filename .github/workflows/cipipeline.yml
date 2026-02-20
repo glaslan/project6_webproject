@@ -45,3 +45,4 @@ jobs:
       - name: Run pylint
         run: |
           pylint $(git ls-files '*.py') --fail-under=8 #Run Pylint on necessary code (could change to include specified files)
+          pytest tests/
