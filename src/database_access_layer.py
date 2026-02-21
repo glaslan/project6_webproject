@@ -310,7 +310,7 @@ class Database:
 
         post_collection = []
         posts = self.connection.execute(
-            "SELECT post_id, json_extract(json, '$.user_id'), json_extract(json, '$.image_ext'), json_extract(json, '$.content'), json_extract(json, '$.date') FROM posts"
+            "SELECT post_id, json_extract(json, '$.user_id'), json_extract(json, '$.image_ext'), json_extract(json, '$.content'), json_extract(json, '$.date') FROM posts ORDER BY json_extract(json, '$.date') DESC"
         ).fetchall()
 
         # this might be the most cursed for loop i've ever written

@@ -1,15 +1,19 @@
 """ Module for managing posts """
-from flask import jsonify
+from flask import jsonify, flash
 from datetime import datetime
+import os
 from uuid import uuid4
 from werkzeug.utils import secure_filename
 import datetime
+from PIL import Image
 
 from src.database_access_layer import Database
 from src.constants import *
 
 UPLOAD_FOLDER = "./images/"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+APP_DIR = os.path.abspath(os.path.dirname(__file__))
+
 
 
 class PostController:
@@ -99,21 +103,20 @@ class PostController:
             "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
         )
 
-    def upload_image(self, file, post_id) -> bool:
+    def upload_image(self, file, post_id, upload_dir) -> bool:
         """
         Opens file, checks to ensure it is an image then saves it to the uploads folder
         """
-        # get image content
-        # change filename to post_id
-        # save the image in the images folder
-        if file.filename == "":
-            flash("No selected file")
-            return False
-        if file and allowed_file(file.filename):
-            _, extension = filename.rsplit(".", 1)
-            filename = str(post_id) + "." + extension
-            # file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            return True
+        if "." in file.filename:
+            image_ext = file.filename.rsplit(".", 1)[1].lower()
+            safe_name = f"{post_id}.{image_ext}"
+            file.save(os.path.join(upload_dir, safe_name))
+            image = Image.open(os.path.join(upload_dir, safe_name))
+            scaled_image = image.resize((256, 256))
+            scaled_image.save(os.path.join(upload_dir, safe_name))
+            return image_ext
+        return None
+            
 
 
 # db = Database("test.db")

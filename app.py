@@ -153,14 +153,11 @@ def home():
         image_ext = None
         file = request.files.get("image")
         if file and file.filename:
-            if "." in file.filename:
-                image_ext = file.filename.rsplit(".", 1)[1].lower()
-                safe_name = f"{post_id}.{image_ext}"
-                file.save(os.path.join(UPLOAD_DIR, safe_name))
-            else:
+            image_ext = posts.upload_image(file, post_id, UPLOAD_DIR)
+            if not image_ext:
                 flash("Invalid image file", "error")
-                image_ext = None
                 return redirect(url_for("home"))
+            
         post_obj = {
             POST_ID: str(post_id),
             USER_ID: str(user[USER_ID]),
