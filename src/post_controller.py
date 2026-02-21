@@ -15,7 +15,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-
 class PostController:
     """Post controller class"""
 
@@ -116,7 +115,6 @@ class PostController:
             scaled_image.save(os.path.join(upload_dir, safe_name))
             return image_ext
         return None
-            
 
 
 # db = Database("test.db")

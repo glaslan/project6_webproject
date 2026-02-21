@@ -157,7 +157,7 @@ def home():
             if not image_ext:
                 flash("Invalid image file", "error")
                 return redirect(url_for("home"))
-            
+
         post_obj = {
             POST_ID: str(post_id),
             USER_ID: str(user[USER_ID]),
