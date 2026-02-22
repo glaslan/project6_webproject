@@ -198,7 +198,7 @@ def home():
         post_controller=posts,
         page=page,
         has_more=has_more,
-        max_chars=1024
+        max_chars=1024,
     )
 
 
