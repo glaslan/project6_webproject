@@ -178,6 +178,11 @@
       </table>
 
       <br>
+    {% if has_more %}
+    <div align="center" style="margin:10px 0;">
+      <a class="y2k-btn" href="/?page={{ page + 1 }}">More</a>
+    </div>
+  {% endif %}
 
       <!--Footer-->
       <div align="center">

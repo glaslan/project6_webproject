@@ -1,6 +1,7 @@
 """ This module is the main entry point for the Flask app """
 import os
 from datetime import timedelta
+from tracemalloc import start
 from uuid import uuid4
 import traceback
 
@@ -175,14 +176,29 @@ def home():
             flash("Failed to create post", "error")
         return redirect(url_for("home"))
 
+    PAGE_SIZE = 10
+    try:
+        page = int(request.args.get("page", "1"))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+
     all_posts = posts.get_posts()
     all_posts = [_normalise_post(p) for p in all_posts]
+
+    start = (page - 1) * PAGE_SIZE
+    end = start + PAGE_SIZE
+    page_posts = all_posts[start:end]
+    has_more = end < len(all_posts)
 
     return render_template(
         "html/home.html",
         user=get_current_user(),
-        posts=all_posts,
+        posts=page_posts,
         post_controller=posts,
+        page=page,
+        has_more=has_more,
+        max_chars=1024
     )
 
 
