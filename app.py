@@ -494,7 +494,6 @@ def profile():
                 new_username = (request.form.get(USERNAME) or user[USERNAME]).strip()
                 new_password = request.form.get(PASSWORD) or user[PASSWORD]
 
-
                 if not new_username or not new_password:
                     return (
                         jsonify(
