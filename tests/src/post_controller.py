@@ -130,7 +130,8 @@ class PostController:
                 image.close()
             return image_ext
         return None
-    
+
+
 def validate_value(value):
 
     if not value:

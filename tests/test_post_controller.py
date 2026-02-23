@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 @pytest.fixture
 class TestPostController:
-    
+
     # TEST-PC-FUNC-0001
     def test_generate_uuid(self):
 
@@ -161,11 +161,7 @@ class TestPostController:
             CONTENT: "post1",
             DATE: "2026-02-15 12:30:28",
         }
-        user = {
-            USERNAME: "user", 
-            PASSWORD: "password", 
-            USER_ID: "1234"
-        }
+        user = {USERNAME: "user", PASSWORD: "password", USER_ID: "1234"}
 
         # compute
         pc.db.insert_user(user)
@@ -174,8 +170,3 @@ class TestPostController:
 
         # assert
         assert result == "username"
-
-
-
-
-
