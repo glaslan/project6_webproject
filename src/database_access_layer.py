@@ -30,7 +30,7 @@ class Database:
         if not path.endswith(".db"):
             path += ".db"
 
-        self.connection = sql.connect(path)
+        self.connection = sql.connect(path, timeout=60)
 
         # create the user and posts tables if they do not exist
         self.connection.execute(
