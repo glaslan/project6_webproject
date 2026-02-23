@@ -190,7 +190,7 @@ def home():
                 page = 1
             page = max(page, 1)
 
-            all_posts = posts.get_posts()
+            all_posts = posts.get_posts(page)
             all_posts = [_normalise_post(p) for p in all_posts]
 
             start = (page - 1) * PAGE_SIZE
