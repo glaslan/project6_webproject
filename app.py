@@ -36,6 +36,7 @@ from src.constants import (
     DELETE,
     OPTIONS,
 )
+
 from src.auth_controller import AuthController
 from src.post_controller import PostController
 from src.database_access_layer import Database

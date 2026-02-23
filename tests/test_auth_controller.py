@@ -1,6 +1,6 @@
 import pytest
-from src.auth_controller import AuthController
-from src.database_access_layer import Database
+from auth_controller import AuthController
+from database_access_layer import Database
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
