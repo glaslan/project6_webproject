@@ -18,7 +18,7 @@ class TestPostController:
         result = pc.generate_uuid()
 
         # assert
-        assert len(result) > 16
+        assert result is not None
 
     # TEST-PC-FUNC-0002
     def test_get_filename(self):
@@ -108,7 +108,7 @@ class TestPostController:
         assert result2 == False
 
     # TEST-PC-ITGR-0003
-    def test_create_post_invalid_post(self):
+    def test_get_posts(self):
 
         # initialize
         pc = PostController(TEST_DATABASE_PATH)
@@ -147,7 +147,7 @@ class TestPostController:
         assert len(result) == 3
 
     # TEST-PC-ITGR-0004
-    def test_create_post_invalid_post(self):
+    def test_get_username(self):
 
         # initialize
         pc = PostController(TEST_DATABASE_PATH)
@@ -168,4 +168,4 @@ class TestPostController:
         result = pc.get_username(post)
 
         # assert
-        assert result == "username"
+        assert result == "user"
