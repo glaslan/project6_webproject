@@ -401,6 +401,26 @@ def profile():
                 return redirect(url_for("profile"))
 
             if method == PATCH:
+
+                action = request.form.get("action")
+                print(action)
+
+                if action == "edit_post":
+                    
+                    date = request.form.get(DATE)
+                    post_id = request.form.get(POST_ID)
+
+                    old_post = posts.get_post_by_id(post_id)
+
+                    edited_post = old_post.copy()
+                    edited_post[CONTENT] = request.form.get(CONTENT)
+
+                    posts.edit_post(old_post, edited_post, old_post[USER_ID])
+
+                    print("edit")
+
+                    return redirect(url_for("profile"))
+                    
                 req_type = (data.get("type") or "user").lower()
 
                 if req_type == "user":

@@ -134,13 +134,15 @@
               <div class="small">No posts yet. Post something on <a href="/">Home</a>.</div>
             {% else %}
               {% for p in posts %}
+              
               <div class="post-box">
                 <div><b>{{ p["title"] }} | {{ p["date"] }}</b></div>
                 <div class="small">{{ p["created_at_display"] }}</div>
                 <hr>
-                <div style="white-space: pre-wrap;">{{ p["content"] }}</div>
 
-                {% if post_controller.get_filename(p) %}
+                <div id="content-display-{{ p['post_id'] }}" style="white-space: pre-wrap;">{{ p["content"] }}</div>
+
+                {% if post_controller.get_filename(p) %} 
                 <br>
                   <img src="/get_image/{{post_controller.get_filename(p)}}" alt="post image"
                        style="max-width: 20%; border: 2px outset #ffffff;">
@@ -153,6 +155,16 @@
                   <input type="hidden" name="date" value="{{ p['date'] }}">
                   <input class="y2k-btn" type="submit" value="Delete Post">
                 </form>
+                <form method="POST" action="/profile">
+                  <input type="hidden" name="action" value="edit_post">
+                  <input type="hidden" name="method" value="PATCH">
+                  <input type="hidden" name="post_id" value="{{ p['post_id'] }}"> 
+                  <input type="text" name="content" size="80" height="20" value="">
+                  <input class="y2k-btn" type="submit" value="Save Post">
+
+
+                  <span id="edit-status-{{ p['post_id'] }}" class="small"></span>
+                </form>
               </div>
               {% endfor %}
             {% endif %}
@@ -163,11 +175,42 @@
       <br>
 
       <div align="center">
-        <font size="2">Powered by Y2K-Board v1.0 | 2026</font>
+        <font size="2">Powered by Y2K-Board v1.0 | 2026</font> 
       </div>
     </td>
   </tr>
 </table>
+
+<script>
+async function editPost(postId) {
+  postId = String(postId);
+  var statusEl = document.getElementById("edit-status-" + postId);
+  statusEl.innerHTML = "Saving...";
+
+  var content = document.getElementById("edit-content-" + postId).value;
+
+  try {
+    const resp = await fetch("/profile", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ type: "post", post_id: parseInt(postId, 10), content: content })
+    });
+
+    if (!resp.ok) {
+      statusEl.innerHTML = "Failed.";
+      alert("Edit failed.");
+      return;
+    }
+
+    statusEl.innerHTML = "Saved.";
+    document.getElementById("content-display-" + postId).textContent = content;
+
+  } catch (e) {
+    statusEl.innerHTML = "Failed.";
+    alert("Edit failed.");
+  }
+}
+</script>
 
 </body>
 </html>
