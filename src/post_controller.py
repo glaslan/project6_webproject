@@ -26,6 +26,15 @@ class PostController:
         """Destructor for the PostController class"""
         self.db.close()
 
+    def __enter__(self):
+        """Enter context manager to return self for use in 'with' block"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager to close database connection"""
+        self.db.close()
+        return False
+
     def create_post(self, post: dict) -> bool:
         """Creates a new post in the database"""
 
@@ -127,8 +136,11 @@ class PostController:
             safe_name = f"{post_id}.{image_ext}"
             file.save(os.path.join(upload_dir, safe_name))
             image = Image.open(os.path.join(upload_dir, safe_name))
-            scaled_image = image.resize((256, 256))
-            scaled_image.save(os.path.join(upload_dir, safe_name))
+            try:
+                scaled_image = image.resize((256, 256))
+                scaled_image.save(os.path.join(upload_dir, safe_name))
+            finally:
+                image.close()
             return image_ext
         return None
     
