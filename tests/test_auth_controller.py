@@ -45,3 +45,11 @@ class TestAuthController:
             "result": 200,
             "data": {"message": "logout success"},
         }
+
+    def test_verify_password(self, db, auth_controller):
+        """
+        Tests that the _verify_password function returns True when given the 
+        correct username and password after a user has been registered.
+        """
+        auth_controller.register(TestAuthController.user)
+        assert auth_controller._verify_password(TestAuthController.user["username"], TestAuthController.user["password"]) is True
