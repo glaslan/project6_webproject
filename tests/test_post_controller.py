@@ -1,7 +1,7 @@
 import pytest
-from post_controller import PostController
-from database_access_layer import Database
-from constants import *
+from src.post_controller import PostController
+from src.database_access_layer import Database
+from src.constants import *
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
