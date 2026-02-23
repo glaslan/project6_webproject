@@ -214,8 +214,6 @@ class TestDatabase:
         assert len(result1) == 0
         assert len(result2) == 2
 
-        
-
     # TEST-DB-FUNC-0010
     def test_update_post(self):
 
@@ -249,7 +247,6 @@ class TestDatabase:
         assert result[DATE] == "2026-02-15"
         assert result[CONTENT] == "edit"
         assert result[IMAGE_EXT] == ".jpg"
-        
 
     # TEST-DB-FUNC-0011
     def test_update_user(self):
