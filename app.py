@@ -170,7 +170,7 @@ def home():
                     POST_ID: str(post_id),
                     USER_ID: str(user[USER_ID]),
                     CONTENT: content,
-                    IMAGE_EXT: f".{image_ext}",
+                    IMAGE_EXT: f".{image_ext}" if image_ext else "NONE",
                 }
 
                 print(post_obj[IMAGE_EXT])
@@ -190,7 +190,7 @@ def home():
                 page = 1
             page = max(page, 1)
 
-            all_posts = posts.get_posts()
+            all_posts = posts.get_posts(page)
             all_posts = [_normalise_post(p) for p in all_posts]
 
             start = (page - 1) * PAGE_SIZE
@@ -209,7 +209,7 @@ def home():
     all_posts = [_normalise_post(p) for p in all_posts]
 
     page_posts = all_posts
-    has_more = (page*PAGE_SIZE) < db.get_post_count() 
+    has_more = (page * PAGE_SIZE) < db.get_post_count()
 
     return render_template(
         "html/home.html",
