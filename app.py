@@ -406,7 +406,7 @@ def profile():
                 print(action)
 
                 if action == "edit_post":
-                    
+
                     date = request.form.get(DATE)
                     post_id = request.form.get(POST_ID)
 
@@ -420,7 +420,7 @@ def profile():
                     print("edit")
 
                     return redirect(url_for("profile"))
-                    
+
                 req_type = (data.get("type") or "user").lower()
 
                 if req_type == "user":
@@ -513,7 +513,7 @@ def profile():
                 }
 
                 ok = auth.db.update_user(user, edited)
-                return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
+                return redirect(url_for("profile"))
 
             if method == DELETE:
                 req_type = (data.get("type") or "user").lower()

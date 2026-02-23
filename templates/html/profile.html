@@ -134,7 +134,7 @@
               <div class="small">No posts yet. Post something on <a href="/">Home</a>.</div>
             {% else %}
               {% for p in posts %}
-              
+
               <div class="post-box">
                 <div><b>{{ p["title"] }} | {{ p["date"] }}</b></div>
                 <div class="small">{{ p["created_at_display"] }}</div>
@@ -142,7 +142,7 @@
 
                 <div id="content-display-{{ p['post_id'] }}" style="white-space: pre-wrap;">{{ p["content"] }}</div>
 
-                {% if post_controller.get_filename(p) %} 
+                {% if post_controller.get_filename(p) %}
                 <br>
                   <img src="/get_image/{{post_controller.get_filename(p)}}" alt="post image"
                        style="max-width: 20%; border: 2px outset #ffffff;">
@@ -158,7 +158,7 @@
                 <form method="POST" action="/profile">
                   <input type="hidden" name="action" value="edit_post">
                   <input type="hidden" name="method" value="PATCH">
-                  <input type="hidden" name="post_id" value="{{ p['post_id'] }}"> 
+                  <input type="hidden" name="post_id" value="{{ p['post_id'] }}">
                   <input type="text" name="content" size="80" height="20" value="">
                   <input class="y2k-btn" type="submit" value="Save Post">
 
@@ -175,7 +175,7 @@
       <br>
 
       <div align="center">
-        <font size="2">Powered by Y2K-Board v1.0 | 2026</font> 
+        <font size="2">Powered by Y2K-Board v1.0 | 2026</font>
       </div>
     </td>
   </tr>
