@@ -124,6 +124,7 @@ class PostController:
                 scaled_image = image.resize((256, 256))
                 scaled_image.save(os.path.join(upload_dir, safe_name))
             finally:
+                scaled_image.close()
                 image.close()
             return image_ext
         return None

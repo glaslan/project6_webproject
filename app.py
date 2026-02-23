@@ -167,7 +167,7 @@ def home():
                     POST_ID: str(post_id),
                     USER_ID: str(user[USER_ID]),
                     CONTENT: content,
-                    IMAGE_EXT: f".{image_ext}",
+                    IMAGE_EXT: f".{image_ext}" if image_ext else "NONE",
                 }
 
                 print(post_obj[IMAGE_EXT])
