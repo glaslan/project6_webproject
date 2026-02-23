@@ -225,8 +225,6 @@ class TestDatabase:
         assert result2[0][IMAGE_EXT] == "NONE"
         assert result2[0][CONTENT] == "test1"
 
-        
-
     # TEST-DB-FUNC-0010
     def test_update_post(self):
 
@@ -260,7 +258,6 @@ class TestDatabase:
         assert result[DATE] == "2026-02-15"
         assert result[CONTENT] == "edit"
         assert result[IMAGE_EXT] == ".jpg"
-        
 
     # TEST-DB-FUNC-0011
     def test_update_user(self):
