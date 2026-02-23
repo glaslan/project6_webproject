@@ -327,6 +327,8 @@ def profile():
     template: The profile page html template, with the current user (if logged in) and their posts
     """
 
+    db = Database(DATABASE_PATH)
+
     with AuthController(DATABASE_PATH) as auth:
         with PostController(DATABASE_PATH) as posts:
 
@@ -360,7 +362,7 @@ def profile():
                 return jsonify({"ok": False, "error": "unauthorized"}), 401
 
             if method == GET:
-                all_posts = posts.get_posts()
+                all_posts = db.get_all_posts()
                 my_posts = [
                     p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])
                 ]
