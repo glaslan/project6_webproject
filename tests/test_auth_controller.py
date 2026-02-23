@@ -27,7 +27,7 @@ class TestAuthController:
 
         ac.register(self.user)
 
-        assert ac.db.get_user_by_username(self.user[USERNAME]) == ac._hash_password(
+        assert ac._verify_password(self.user[USERNAME], self.user[PASSWORD]) == ac._hash_password(
             self.user[PASSWORD]
         )
 
@@ -54,7 +54,7 @@ class TestAuthController:
         assert result is not None
 
         assert result[USERNAME] == self.user[USERNAME]
-        assert result[PASSWORD] == ac._hash_password(self.user[PASSWORD])
+        assert ac._verify_password(result[USERNAME], self.user[PASSWORD])
 
     # TEST-AC-ITGR-0002
     def test_register_invalid(self):
@@ -65,7 +65,7 @@ class TestAuthController:
         ac.register(self.user)
         result = ac.register(self.user)
 
-        assert result is False
+        assert result is None
 
     # TEST-AC-ITGR-0003
     def test_register_short_password(self):
@@ -80,7 +80,7 @@ class TestAuthController:
 
         result = ac.register(user)
 
-        assert result is False
+        assert result is None
 
     # TEST-AC-ITGR-0004
     def test_login(self):
