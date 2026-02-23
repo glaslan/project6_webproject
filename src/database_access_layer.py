@@ -162,9 +162,9 @@ class Database:
         ).fetchone()
 
         if user_id is not None:
-            user[USERNAME] = validate_value(str(username))
-            user[PASSWORD] = validate_value(str(password))
-            user[USER_ID] = validate_value(str(user_id))
+            user[USERNAME] = validate_value((username))
+            user[PASSWORD] = validate_value((password))
+            user[USER_ID] = validate_value((user_id))
             return user
 
         return None
@@ -482,7 +482,7 @@ def validate_value(value):
     if not value:
         return value
     if isinstance(value, tuple):
-        return value[0]
+        return str(value[0])
     return value
 
 

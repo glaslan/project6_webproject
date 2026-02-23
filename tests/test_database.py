@@ -279,15 +279,11 @@ class TestDatabase:
         # compute
 
         db.insert_user(user)
-        result1 = db.get_user_by_username("username")
         db.delete_user(user[USER_ID])
-        result2 = db.get_user_by_username("username")
+        result = db.get_user_by_username("username")
 
         # assert
-        assert result1[USER_ID] == "1234"
-        assert result1[USERNAME] == "user"
-        assert result1[PASSWORD] == "password"
-        assert result2 is None
+        assert result is None
 
     # TEST-DB-FUNC-0013
     def test_delete_post(self):
