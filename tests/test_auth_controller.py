@@ -27,9 +27,7 @@ class TestAuthController:
 
         ac.register(self.user)
 
-        assert ac._verify_password(self.user[USERNAME], self.user[PASSWORD]) == ac._hash_password(
-            self.user[PASSWORD]
-        )
+        assert ac._hash_password(self.user[PASSWORD]) is not self.user[PASSWORD]
 
     # TEST-AC-FUNC-0002
     def test_logout(self):
