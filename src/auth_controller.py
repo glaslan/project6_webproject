@@ -14,8 +14,13 @@ class AuthController:
 
     min_password_length = 8
 
-    def __init__(self, database_path: str):
-        self.db = Database(database_path)
+    def __init__(self, database_path: str = None, db: Database = None):
+        if db is not None:
+            self.db = db
+            self._owns_db = False
+        else:
+            self.db = Database(database_path)
+            self._owns_db = True
 
     def __enter__(self):
         """Enter context manager to return self for use in 'with' block"""
@@ -23,7 +28,8 @@ class AuthController:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context manager to close database connection"""
-        self.db.close()
+        if getattr(self, '_owns_db', False):
+            self.db.close()
         return False
 
     def register(self, user: dict) -> dict | None:

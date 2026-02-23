@@ -13,3 +13,4 @@ pre-commit
 pytest
 flask_login
 flask_jwt_extended
+waitress

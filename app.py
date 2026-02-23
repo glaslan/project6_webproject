@@ -140,8 +140,8 @@ def home():
     """
 
     with Database(DATABASE_PATH) as db:
-        with AuthController(DATABASE_PATH) as auth:
-            with PostController(DATABASE_PATH) as posts:
+        with AuthController(db=db) as auth:
+            with PostController(db=db) as posts:
 
                 user = get_current_user(auth)
 
@@ -189,9 +189,8 @@ def home():
                     page = 1
                 page = max(page, 1)
 
-                page_posts = posts.get_posts(page)
+                page_posts, has_more = posts.get_posts(page, PAGE_SIZE)
                 page_posts = [_normalise_post(p) for p in page_posts]
-                has_more = (page * PAGE_SIZE) < db.get_post_count()
 
                 return render_template(
                     "html/home.html",
@@ -327,235 +326,229 @@ def profile():
     template: The profile page html template, with the current user (if logged in) and their posts
     """
 
-    with AuthController(DATABASE_PATH) as auth:
-        with PostController(DATABASE_PATH) as posts:
+    with Database(DATABASE_PATH) as db:
+        with AuthController(db=db) as auth:
+            with PostController(db=db) as posts:
 
-            if request.method == OPTIONS:
-                resp = app.make_response(("", 204))
-                resp.headers["Allow"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                return resp
+                if request.method == OPTIONS:
+                    resp = app.make_response(("", 204))
+                    resp.headers["Allow"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                    return resp
 
-            user = get_current_user(auth)
-            user = _normalise_user(user)
+                user = get_current_user(auth)
+                user = _normalise_user(user)
 
-            data = request.get_json(silent=True) or {}
+                data = request.get_json(silent=True) or {}
 
-            method = request.method
-            if request.form.get("method"):
+                method = request.method
+                if request.form.get("method"):
 
-                override_method = request.form.get("method")
-                if override_method == "PATCH":
-                    method = PATCH
-                elif override_method == "PUT":
-                    method = PUT
-                elif override_method == "DELETE":
-                    method = DELETE
+                    override_method = request.form.get("method")
+                    if override_method == "PATCH":
+                        method = PATCH
+                    elif override_method == "PUT":
+                        method = PUT
+                    elif override_method == "DELETE":
+                        method = DELETE
 
-            print(method)
+                print(method)
 
-            if not user:
+                if not user:
+                    if method == GET:
+                        flash("Please log in first.", "error")
+                        return redirect(url_for("login"))
+                    return jsonify({"ok": False, "error": "unauthorized"}), 401
+
                 if method == GET:
-                    flash("Please log in first.", "error")
-                    return redirect(url_for("login"))
-                return jsonify({"ok": False, "error": "unauthorized"}), 401
+                    my_posts = posts.get_user_posts(str(user[USER_ID]))
 
-            if method == GET:
-                all_posts = posts.get_posts()
-                my_posts = [
-                    p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])
-                ]
+                    return render_template(
+                        "html/profile.html",
+                        user=user,
+                        posts=my_posts,
+                        post_controller=posts,
+                    )
 
-                return render_template(
-                    "html/profile.html",
-                    user=user,
-                    posts=my_posts,
-                    post_controller=posts,
-                )
+                if method == POST:
+                    action = request.form.get("action")
 
-            if method == POST:
-                action = request.form.get("action")
+                    if action == "logout":
+                        session.pop(USER_ID, None)
+                        flash("Logged out.", "success")
 
-                if action == "logout":
-                    session.pop(USER_ID, None)
-                    flash("Logged out.", "success")
+                        return redirect(url_for("home"))
 
-                    return redirect(url_for("home"))
+                    if action == "delete_post":
+                        date = request.form.get(DATE)
+                        if not date:
+                            flash("Missing post date.", "error")
+                            return redirect(url_for("profile"))
 
-                if action == "delete_post":
-                    date = request.form.get(DATE)
-                    if not date:
-                        flash("Missing post date.", "error")
+                        ok = posts.delete_post(str(user[USER_ID]), date)
+                        flash(
+                            "Post deleted." if ok else "Failed to delete post.",
+                            "success" if ok else "error",
+                        )
                         return redirect(url_for("profile"))
 
-                    ok = posts.delete_post(str(user[USER_ID]), date)
-                    flash(
-                        "Post deleted." if ok else "Failed to delete post.",
-                        "success" if ok else "error",
-                    )
+                    flash("Unknown action.", "error")
                     return redirect(url_for("profile"))
 
-                flash("Unknown action.", "error")
-                return redirect(url_for("profile"))
+                if method == PATCH:
+                    req_type = (data.get("type") or "user").lower()
 
-            if method == PATCH:
-                req_type = (data.get("type") or "user").lower()
+                    if req_type == "user":
+                        new_username = request.form.get(USERNAME)
+                        new_password = request.form.get(PASSWORD)
 
-                if req_type == "user":
-                    new_username = request.form.get(USERNAME)
-                    new_password = request.form.get(PASSWORD)
+                        if not new_username and not new_password:
+                            return (
+                                jsonify(
+                                    {
+                                        "ok": False,
+                                        "error": "PATCH user requires username and/or password",
+                                    }
+                                ),
+                                400,
+                            )
 
-                    if not new_username and not new_password:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PATCH user requires username and/or password",
-                                }
-                            ),
-                            400,
-                        )
+                        edited = {
+                            USER_ID: int(user[USER_ID]),
+                            USERNAME: new_username if new_username else user[USERNAME],
+                            PASSWORD: generate_password_hash(new_password)
+                            if new_password
+                            else _unwrap(user[PASSWORD]),
+                        }
 
-                    edited = {
-                        USER_ID: int(user[USER_ID]),
-                        USERNAME: new_username if new_username else user[USERNAME],
-                        PASSWORD: generate_password_hash(new_password)
-                        if new_password
-                        else _unwrap(user[PASSWORD]),
-                    }
+                        ok = auth.db.update_user(user, edited)
+                        return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
 
-                    ok = auth.db.update_user(user, edited)
-                    return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
+                    if req_type == POST:
+                        post_id = data.get(POST_ID)
+                        if post_id is None:
+                            return (
+                                jsonify(
+                                    {"ok": False, "error": "PATCH post requires post_id"}
+                                ),
+                                400,
+                            )
 
-                if req_type == POST:
-                    post_id = data.get(POST_ID)
-                    if post_id is None:
-                        return (
-                            jsonify(
-                                {"ok": False, "error": "PATCH post requires post_id"}
-                            ),
-                            400,
-                        )
+                        old_post = posts.get_post_by_id(int(post_id))
+                        if not old_post:
+                            return jsonify({"ok": False, "error": "post not found"}), 404
 
-                    old_post = posts.get_post_by_id(int(post_id))
-                    if not old_post:
-                        return jsonify({"ok": False, "error": "post not found"}), 404
+                        new_content = data.get(CONTENT)
+                        new_image_ext = data.get(IMAGE_EXT)
 
-                    new_content = data.get(CONTENT)
-                    new_image_ext = data.get(IMAGE_EXT)
+                        if not new_content and not new_image_ext:
+                            return (
+                                jsonify(
+                                    {
+                                        "ok": False,
+                                        "error": "PATCH post requires content and/or image_ext",
+                                    }
+                                ),
+                                400,
+                            )
 
-                    if not new_content and not new_image_ext:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PATCH post requires content and/or image_ext",
-                                }
-                            ),
-                            400,
-                        )
+                        author = _unwrap(old_post.get(USER_ID))
+                        if str(author) != str(user[USER_ID]):
+                            return jsonify({"ok": False, "error": "forbidden"}), 403
 
-                    author = _unwrap(old_post.get(USER_ID))
-                    if str(author) != str(user[USER_ID]):
-                        return jsonify({"ok": False, "error": "forbidden"}), 403
+                        edited_post = old_post.copy()
+                        edited_post[CONTENT] = new_content
+                        edited_post[IMAGE_EXT] = new_image_ext
 
-                    edited_post = old_post.copy()
-                    edited_post[CONTENT] = new_content
-                    edited_post[IMAGE_EXT] = new_image_ext
+                        posts.edit_post(old_post, edited_post, old_post[USER_ID])
+                        return jsonify({"ok": True, "updated": POST}), 200
 
-                    posts.edit_post(old_post, edited_post, old_post[USER_ID])
-                    return jsonify({"ok": True, "updated": POST}), 200
+                    return jsonify({"ok": False, "error": "unknown type"}), 400
 
-                return jsonify({"ok": False, "error": "unknown type"}), 400
+                if method == PUT:
+                    req_type = (data.get("type") or "user").lower()
 
-            if method == PUT:
-                req_type = (data.get("type") or "user").lower()
+                    if req_type == "user":
+                        new_username = (data.get(USERNAME) or "").strip()
+                        new_password = data.get(PASSWORD) or ""
 
-                if req_type == "user":
-                    new_username = (data.get(USERNAME) or "").strip()
-                    new_password = data.get(PASSWORD) or ""
+                        if not new_username or not new_password:
+                            return (
+                                jsonify(
+                                    {
+                                        "ok": False,
+                                        "error": "PUT user requires username and password",
+                                    }
+                                ),
+                                400,
+                            )
 
-                    if not new_username or not new_password:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PUT user requires username and password",
-                                }
-                            ),
-                            400,
-                        )
+                        edited = {
+                            USER_ID: int(user[USER_ID]),
+                            USERNAME: new_username,
+                            PASSWORD: generate_password_hash(new_password),
+                        }
 
-                    edited = {
-                        USER_ID: int(user[USER_ID]),
-                        USERNAME: new_username,
-                        PASSWORD: generate_password_hash(new_password),
-                    }
+                        ok = auth.db.update_user(user, edited)
+                        return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
 
-                    ok = auth.db.update_user(user, edited)
-                    return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
+                    if req_type == POST:
+                        post_id = data.get(POST_ID)
+                        content = data.get(CONTENT)
+                        image_ext = data.get(IMAGE_EXT, "NONE")
 
-                if req_type == POST:
-                    post_id = data.get(POST_ID)
-                    content = data.get(CONTENT)
-                    image_ext = data.get(IMAGE_EXT, "NONE")
+                        if post_id is None or content is None:
+                            return (
+                                jsonify(
+                                    {
+                                        "ok": False,
+                                        "error": "PUT post requires post_id and content",
+                                    }
+                                ),
+                                400,
+                            )
 
-                    if post_id is None or content is None:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PUT post requires post_id and content",
-                                }
-                            ),
-                            400,
-                        )
+                        old_post = db.get_post_by_id(int(post_id))
+                        if not old_post:
+                            return jsonify({"ok": False, "error": "post not found"}), 404
 
-                    old_post = auth.db.get_post_by_id(int(post_id))
-                    if not old_post:
-                        return jsonify({"ok": False, "error": "post not found"}), 404
+                        author = _unwrap(old_post.get(USER_ID))
+                        if str(author) != str(user[USER_ID]):
+                            return jsonify({"ok": False, "error": "forbidden"}), 403
 
-                    author = _unwrap(old_post.get(USER_ID))
-                    if str(author) != str(user[USER_ID]):
-                        return jsonify({"ok": False, "error": "forbidden"}), 403
+                        edited_post = old_post.copy()
+                        edited_post[CONTENT] = new_content
+                        edited_post[IMAGE_EXT] = new_image_ext
 
-                    edited_post = old_post.copy()
-                    edited_post[CONTENT] = new_content
-                    edited_post[IMAGE_EXT] = new_image_ext
+                        posts.edit_post(old_post, edited_post, old_post[USER_ID])
 
-                    posts.edit_post(old_post, edited_post, old_post[USER_ID])
+                        return jsonify({"ok": True, "replaced": POST}), 200
 
-                    return jsonify({"ok": True, "replaced": POST}), 200
+                    return jsonify({"ok": False, "error": "unknown type"}), 400
 
-                return jsonify({"ok": False, "error": "unknown type"}), 400
+                if method == DELETE:
+                    req_type = (data.get("type") or "user").lower()
 
-            if method == DELETE:
-                req_type = (data.get("type") or "user").lower()
+                    if req_type == POST:
+                        date = data.get(DATE)
+                        if not date:
+                            return (
+                                jsonify(
+                                    {"ok": False, "error": "DELETE post requires date"}
+                                ),
+                                400,
+                            )
 
-                if req_type == POST:
-                    date = data.get(DATE)
-                    if not date:
-                        return (
-                            jsonify(
-                                {"ok": False, "error": "DELETE post requires date"}
-                            ),
-                            400,
-                        )
+                        ok = posts.delete_post(str(user[USER_ID]), date)
+                        return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
 
-                    ok = posts.delete_post(str(user[USER_ID]), date)
-                    return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
+                    if req_type == "user":
+                        db.delete_user_posts(user[USER_ID])
+                        ok = db.delete_user(str(user[USER_ID]))
+                        if ok:
+                            session.pop(USER_ID, None)
+                        return jsonify({"ok": ok, "deleted": "user"}), (200 if ok else 400)
 
-                if req_type == "user":
-                    auth.db.connection.execute(
-                        "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ?",
-                        (["%" + str(user[USER_ID]) + "%"]),
-                    )
-                    auth.db.connection.commit()
-                    ok = auth.db.delete_user(str(user[USER_ID]))
-                    if ok:
-                        session.pop(USER_ID, None)
-                    return jsonify({"ok": ok, "deleted": "user"}), (200 if ok else 400)
-
-                return jsonify({"ok": False, "error": "unknown type"}), 400
+                    return jsonify({"ok": False, "error": "unknown type"}), 400
 
 
 # I am not sure what to do with this.
@@ -570,4 +563,18 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=4000)
+    from waitress import serve
+    from src.image_queue import start_worker
+
+    # Start background image processing worker
+    start_worker()
+
+    serve(
+        app,
+        host="0.0.0.0",
+        port=4000,
+        threads=16,             # Up from default 4
+        connection_limit=200,   # Max concurrent connections
+        channel_timeout=120,    # Request timeout in seconds
+        recv_bytes=65536,       # Larger receive buffer
+    )
