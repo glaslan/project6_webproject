@@ -491,65 +491,29 @@ def profile():
                 return jsonify({"ok": False, "error": "unknown type"}), 400
 
             if method == PUT:
-                req_type = (data.get("type") or "user").lower()
+                new_username = (request.form.get(USERNAME) or user[USERNAME]).strip()
+                new_password = request.form.get(PASSWORD) or user[PASSWORD]
 
-                if req_type == "user":
-                    new_username = (data.get(USERNAME) or "").strip()
-                    new_password = data.get(PASSWORD) or ""
 
-                    if not new_username or not new_password:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PUT user requires username and password",
-                                }
-                            ),
-                            400,
-                        )
+                if not new_username or not new_password:
+                    return (
+                        jsonify(
+                            {
+                                "ok": False,
+                                "error": "PUT user requires username and password",
+                            }
+                        ),
+                        400,
+                    )
 
-                    edited = {
-                        USER_ID: int(user[USER_ID]),
-                        USERNAME: new_username,
-                        PASSWORD: generate_password_hash(new_password),
-                    }
+                edited = {
+                    USER_ID: (user[USER_ID]),
+                    USERNAME: new_username,
+                    PASSWORD: generate_password_hash(new_password),
+                }
 
-                    ok = auth.db.update_user(user, edited)
-                    return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
-
-                if req_type == POST:
-                    post_id = data.get(POST_ID)
-                    content = data.get(CONTENT)
-                    image_ext = data.get(IMAGE_EXT, "NONE")
-
-                    if post_id is None or content is None:
-                        return (
-                            jsonify(
-                                {
-                                    "ok": False,
-                                    "error": "PUT post requires post_id and content",
-                                }
-                            ),
-                            400,
-                        )
-
-                    old_post = auth.db.get_post_by_id(int(post_id))
-                    if not old_post:
-                        return jsonify({"ok": False, "error": "post not found"}), 404
-
-                    author = _unwrap(old_post.get(USER_ID))
-                    if str(author) != str(user[USER_ID]):
-                        return jsonify({"ok": False, "error": "forbidden"}), 403
-
-                    edited_post = old_post.copy()
-                    edited_post[CONTENT] = new_content
-                    edited_post[IMAGE_EXT] = new_image_ext
-
-                    posts.edit_post(old_post, edited_post, old_post[USER_ID])
-
-                    return jsonify({"ok": True, "replaced": POST}), 200
-
-                return jsonify({"ok": False, "error": "unknown type"}), 400
+                ok = auth.db.update_user(user, edited)
+                return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
 
             if method == DELETE:
                 req_type = (data.get("type") or "user").lower()
