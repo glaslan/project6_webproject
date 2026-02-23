@@ -5,7 +5,6 @@ from src.constants import *
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-@pytest.fixture
 class TestPostController:
     
     # TEST-PC-FUNC-0001

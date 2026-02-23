@@ -4,7 +4,6 @@ from src.database_access_layer import Database
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-@pytest.fixture
 def auth_controller():
     db_path = "tests/test_database.db"
     controller = AuthController(db_path)

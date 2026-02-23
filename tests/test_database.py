@@ -4,7 +4,6 @@ from src.database_access_layer import Database
 from src.constants import *
 
 
-@pytest.fixture
 class TestDatabase:
 
     # TEST-DB-FUNC-0001
