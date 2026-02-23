@@ -38,6 +38,11 @@ class Database:
         self.connection = sql.connect(path, timeout=60)
         self._closed = False
 
+        # Enable WAL mode for better concurrent write performance
+        self.connection.execute("PRAGMA journal_mode=WAL")
+        self.connection.execute("PRAGMA synchronous=NORMAL")
+        self.connection.execute("PRAGMA busy_timeout=30000")
+
         # create the user and posts tables if they do not exist
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)"
