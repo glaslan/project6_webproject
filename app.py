@@ -515,6 +515,7 @@ def profile():
                     }
 
                     ok = auth.db.update_user(user, edited)
+                    redirect(url_for("profile"))
                     return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
 
                 if req_type == POST:
