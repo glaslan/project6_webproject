@@ -139,87 +139,69 @@ def home():
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
 
-    db = Database(DATABASE_PATH)
+    with Database(DATABASE_PATH) as db:
+        with AuthController(DATABASE_PATH) as auth:
+            with PostController(DATABASE_PATH) as posts:
 
-    with AuthController(DATABASE_PATH) as auth:
-        with PostController(DATABASE_PATH) as posts:
+                user = get_current_user(auth)
 
-            user = get_current_user(auth)
+                if request.method == POST:
+                    if not user:
+                        flash("You must be logged in to create a post", "error")
+                        return redirect(url_for("login"))
 
-            if request.method == POST:
-                if not user:
-                    flash("You must be logged in to create a post", "error")
-                    return redirect(url_for("login"))
-
-                content = (request.form.get(CONTENT) or "").strip()
-                if not content:
-                    flash("Post content cannot be empty", "error")
-                    return redirect(url_for("home"))
-
-                post_id = posts.generate_uuid()
-
-                image_ext = None
-                file = request.files.get("image")
-                if file and file.filename:
-                    image_ext = posts.upload_image(file, post_id, UPLOAD_DIR)
-                    if not image_ext:
-                        flash("Invalid image file", "error")
+                    content = (request.form.get(CONTENT) or "").strip()
+                    if not content:
+                        flash("Post content cannot be empty", "error")
                         return redirect(url_for("home"))
 
-                post_obj = {
-                    POST_ID: str(post_id),
-                    USER_ID: str(user[USER_ID]),
-                    CONTENT: content,
-                    IMAGE_EXT: f".{image_ext}" if image_ext else "NONE",
-                }
+                    post_id = posts.generate_uuid()
 
-                print(post_obj[IMAGE_EXT])
-                print(posts.get_filename(post_obj))
+                    image_ext = None
+                    file = request.files.get("image")
+                    if file and file.filename:
+                        image_ext = posts.upload_image(file, post_id, UPLOAD_DIR)
+                        if not image_ext:
+                            flash("Invalid image file", "error")
+                            return redirect(url_for("home"))
 
-                ok = posts.create_post(post_obj)
-                if ok:
-                    flash("Post created successfully", "success")
-                else:
-                    flash("Failed to create post", "error")
-                return redirect(url_for("home"))
+                    post_obj = {
+                        POST_ID: str(post_id),
+                        USER_ID: str(user[USER_ID]),
+                        CONTENT: content,
+                        IMAGE_EXT: f".{image_ext}" if image_ext else "NONE",
+                    }
 
-            PAGE_SIZE = 10
-            try:
-                page = int(request.args.get("page", "1"))
-            except ValueError:
-                page = 1
-            page = max(page, 1)
+                    print(post_obj[IMAGE_EXT])
+                    print(posts.get_filename(post_obj))
 
-            all_posts = posts.get_posts(page)
-            all_posts = [_normalise_post(p) for p in all_posts]
+                    ok = posts.create_post(post_obj)
+                    if ok:
+                        flash("Post created successfully", "success")
+                    else:
+                        flash("Failed to create post", "error")
+                    return redirect(url_for("home"))
 
-            start = (page - 1) * PAGE_SIZE
-            end = start + PAGE_SIZE
-            page_posts = all_posts[start:end]
-            has_more = end < len(all_posts)
+                PAGE_SIZE = 10
+                try:
+                    page = int(request.args.get("page", "1"))
+                except ValueError:
+                    page = 1
+                page = max(page, 1)
 
-    PAGE_SIZE = 10
-    try:
-        page = int(request.args.get("page", "1"))
-    except ValueError:
-        page = 1
-    page = max(page, 1)
+                page_posts = posts.get_posts(page)
+                page_posts = [_normalise_post(p) for p in page_posts]
+                has_more = (page * PAGE_SIZE) < db.get_post_count()
 
-    all_posts = posts.get_posts(page)
-    all_posts = [_normalise_post(p) for p in all_posts]
-
-    page_posts = all_posts
-    has_more = (page * PAGE_SIZE) < db.get_post_count()
-
-    return render_template(
-        "html/home.html",
-        user=get_current_user(),
-        posts=page_posts,
-        post_controller=posts,
-        page=page,
-        has_more=has_more,
-        max_chars=1024,
-    )
+                return render_template(
+                    "html/home.html",
+                    user=user,
+                    posts=page_posts,
+                    post_controller=posts,
+                    page=page,
+                    has_more=has_more,
+                    max_chars=1024,
+                )
 
 
 @app.route("/get_image/<filename>")
