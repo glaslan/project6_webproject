@@ -38,6 +38,7 @@ from src.constants import (
 )
 from src.auth_controller import AuthController
 from src.post_controller import PostController
+from src.database_access_layer import Database
 
 APP_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(APP_DIR, "images")
@@ -138,6 +139,8 @@ def home():
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
 
+    db = Database(DATABASE_PATH)
+
     with AuthController(DATABASE_PATH) as auth:
         with PostController(DATABASE_PATH) as posts:
 
@@ -195,15 +198,28 @@ def home():
             page_posts = all_posts[start:end]
             has_more = end < len(all_posts)
 
-            return render_template(
-                "html/home.html",
-                user=user,
-                posts=page_posts,
-                post_controller=posts,
-                page=page,
-                has_more=has_more,
-                max_chars=1024,
-            )
+    PAGE_SIZE = 10
+    try:
+        page = int(request.args.get("page", "1"))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+
+    all_posts = posts.get_posts(page)
+    all_posts = [_normalise_post(p) for p in all_posts]
+
+    page_posts = all_posts
+    has_more = (page * PAGE_SIZE) < db.get_post_count()
+
+    return render_template(
+        "html/home.html",
+        user=get_current_user(),
+        posts=page_posts,
+        post_controller=posts,
+        page=page,
+        has_more=has_more,
+        max_chars=1024,
+    )
 
 
 @app.route("/get_image/<filename>")

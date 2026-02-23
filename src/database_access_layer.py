@@ -332,6 +332,10 @@ class Database:
 
         return post_collection
 
+    def get_post_count(self) -> int:
+        """ """
+        return self.connection.execute("SELECT COUNT(*) FROM posts").fetchone()[0]
+
     def update_post(self, old_post: dict, edited_post: dict, user_id: int) -> bool:
         """
         This function updates a posts content and image_ext

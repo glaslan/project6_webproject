@@ -44,11 +44,27 @@ class PostController:
         post[DATE] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return self.db.insert_post(post)
 
-    def get_posts(self) -> list[dict]:
+    def get_posts(self, page) -> list[dict]:
         """Returns a list of all posts in the database"""
 
         # for each post insert the id into the json so the entire object is represented in a json
-        return self.db.get_all_posts()
+        post_collection = []
+        posts = self.db.connection.execute(
+            f"SELECT post_id, json_extract(json, '$.user_id'), json_extract(json, '$.image_ext'), json_extract(json, '$.content'), json_extract(json, '$.date') FROM posts ORDER BY json_extract(json, '$.date') DESC LIMIT 10 OFFSET {(page-1)*10}"
+        ).fetchall()
+
+        # this might be the most cursed for loop i've ever written
+        for post_id, user_id, image_ext, content, date in posts:
+
+            structured_post = {}
+            structured_post[POST_ID] = validate_value(post_id)
+            structured_post[USER_ID] = validate_value(user_id)
+            structured_post[IMAGE_EXT] = validate_value(image_ext)
+            structured_post[CONTENT] = validate_value(content)
+            structured_post[DATE] = validate_value(date)
+            post_collection.append(structured_post)
+
+        return post_collection
 
     def sort_posts(self, posts: list):
         """
@@ -128,6 +144,15 @@ class PostController:
                 image.close()
             return image_ext
         return None
+
+
+def validate_value(value):
+
+    if not value:
+        return value
+    if isinstance(value, tuple):
+        return value[0]
+    return value
 
 
 # db = Database("test.db")
