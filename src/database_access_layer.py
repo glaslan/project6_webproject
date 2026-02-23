@@ -368,7 +368,7 @@ class Database:
             )
             self.connection.execute(
                 "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                [content, "%" + image + "%"],
+                [image, "%" + str(user_id) + "%"],
             )
             self.connection.commit()
             return True
