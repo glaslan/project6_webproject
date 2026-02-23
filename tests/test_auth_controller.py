@@ -14,6 +14,7 @@ def auth_controller():
 
 class TestAuthController:
     user = {
+        "user_id": "1234",
         "username": "test_user",
         "password": "test_password",
     }
@@ -51,7 +52,7 @@ class TestAuthController:
         assert result is not None
 
         assert result[USERNAME] == self.user[USERNAME]
-        assert ac._hash_password(result[PASSWORD]) == self.user[PASSWORD]
+        assert result[PASSWORD] == ac._hash_password(self.user[PASSWORD])
 
     # TEST-AC-ITGR-0002
     def test_register_invalid(self):
@@ -75,7 +76,7 @@ class TestAuthController:
             "password": "test",
         }
 
-        result = ac.register(self.user)
+        result = ac.register(user)
 
         assert result is False
 
