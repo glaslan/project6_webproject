@@ -26,10 +26,12 @@ class TestAuthController:
         ac.db.reset_tables()
 
         ac.register(self.user)
-        
-        assert ac.db.get_user_by_username(self.user[USERNAME]) == ac._hash_password(self.user[PASSWORD])
 
-    # TEST-AC-FUNC-0002 
+        assert ac.db.get_user_by_username(self.user[USERNAME]) == ac._hash_password(
+            self.user[PASSWORD]
+        )
+
+    # TEST-AC-FUNC-0002
     def test_logout(self):
 
         ac = AuthController(TEST_DATABASE_PATH)
@@ -132,11 +134,6 @@ class TestAuthController:
         result = ac._verify_password(self.user[USERNAME], "invalid_password")
 
         assert result == False
-
-    
-
-
-
 
     # def test_register(self, auth_controller):
     #     auth_controller.register(TestAuthController.user)
