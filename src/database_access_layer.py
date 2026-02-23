@@ -31,6 +31,7 @@ class Database:
             path += ".db"
 
         self.connection = sql.connect(path)
+        self.connection.execute("PRAGMA busy_timeout = 5000")
 
         # create the user and posts tables if they do not exist
         self.connection.execute(

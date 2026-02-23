@@ -17,6 +17,15 @@ class AuthController:
     def __init__(self, database_path: str):
         self.db = Database(database_path)
 
+    def __enter__(self):
+        """Enter context manager to return self for use in 'with' block"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager to close database connection"""
+        self.db.close()
+        return False
+
     def register(self, user: dict) -> dict | None:
         """
         Registers a new user given the user's information.
