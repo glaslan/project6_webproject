@@ -406,7 +406,7 @@ def profile():
                 print(action)
 
                 if action == "edit_post":
-                    
+
                     date = request.form.get(DATE)
                     post_id = request.form.get(POST_ID)
 
@@ -420,7 +420,7 @@ def profile():
                     print("edit")
 
                     return redirect(url_for("profile"))
-                    
+
                 req_type = (data.get("type") or "user").lower()
 
                 if req_type == "user":
