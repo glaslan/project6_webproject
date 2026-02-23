@@ -209,7 +209,7 @@ def home():
     all_posts = [_normalise_post(p) for p in all_posts]
 
     page_posts = all_posts
-    has_more = (page*PAGE_SIZE) < db.get_post_count() 
+    has_more = (page * PAGE_SIZE) < db.get_post_count()
 
     return render_template(
         "html/home.html",
