@@ -2,17 +2,9 @@ import pytest
 from src.auth_controller import AuthController
 from src.database_access_layer import Database
 from src.constants import *
-from werkzeug.security import check_password_hash, generate_password_hash
 
 
 @pytest.fixture
-def auth_controller():
-    db_path = "tests/test_database.db"
-    controller = AuthController(db_path)
-    yield controller
-    controller.db.connection.close()
-
-
 class TestDatabase:
 
     # TEST-DB-FUNC-0001
