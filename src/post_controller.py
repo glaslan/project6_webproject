@@ -35,7 +35,6 @@ class PostController:
         self.db.close()
         return False
 
-
     def create_post(self, post: dict) -> bool:
         """Creates a new post in the database"""
 

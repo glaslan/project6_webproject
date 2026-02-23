@@ -250,7 +250,8 @@ def register():
             created = auth.register(potential_new_user)
             if not created:
                 flash(
-                    "Registration failed. Username may be taken or invalid input.", "error"
+                    "Registration failed. Username may be taken or invalid input.",
+                    "error",
                 )
                 return redirect(url_for("register"))
 
@@ -362,10 +363,15 @@ def profile():
 
             if method == GET:
                 all_posts = posts.get_posts()
-                my_posts = [p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])]
+                my_posts = [
+                    p for p in all_posts if str(p.get(USER_ID)) == str(user[USER_ID])
+                ]
 
                 return render_template(
-                    "html/profile.html", user=user, posts=my_posts, post_controller=posts
+                    "html/profile.html",
+                    user=user,
+                    posts=my_posts,
+                    post_controller=posts,
                 )
 
             if method == POST:
@@ -426,7 +432,9 @@ def profile():
                     post_id = data.get(POST_ID)
                     if post_id is None:
                         return (
-                            jsonify({"ok": False, "error": "PATCH post requires post_id"}),
+                            jsonify(
+                                {"ok": False, "error": "PATCH post requires post_id"}
+                            ),
                             400,
                         )
 
@@ -496,7 +504,10 @@ def profile():
                     if post_id is None or content is None:
                         return (
                             jsonify(
-                                {"ok": False, "error": "PUT post requires post_id and content"}
+                                {
+                                    "ok": False,
+                                    "error": "PUT post requires post_id and content",
+                                }
                             ),
                             400,
                         )
@@ -525,7 +536,12 @@ def profile():
                 if req_type == POST:
                     date = data.get(DATE)
                     if not date:
-                        return jsonify({"ok": False, "error": "DELETE post requires date"}), 400
+                        return (
+                            jsonify(
+                                {"ok": False, "error": "DELETE post requires date"}
+                            ),
+                            400,
+                        )
 
                     ok = posts.delete_post(str(user[USER_ID]), date)
                     return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
