@@ -538,6 +538,7 @@ def profile():
                     }
 
                     ok = auth.db.update_user(user, edited)
+                    flash("Account information changed successfully", "success")
                     return redirect(url_for("profile"))
 
                 if method == DELETE:
