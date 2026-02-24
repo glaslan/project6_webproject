@@ -107,10 +107,6 @@
         <tr bgcolor="#ffffff">
           <td>
             <form method="POST" enctype="multipart/form-data" action="/">
-              <div class="small"><b>Title</b></div>
-              <input type="text" name="title" size="60" maxlength="80">
-
-              <br><br>
 
               <div class="small"><b>Content</b> (max {{ max_chars }} chars)</div>
               <textarea name="content" rows="5" maxlength="{{ max_chars }}"></textarea>
@@ -152,8 +148,6 @@
               <div class="small">No posts yet. Be the first to post.</div>
             {% else %}
               {% for p in posts %}
-              <div class="post-box">
-                <div><b>{{ p["title"] }}</b></div>
                 <div class="post-meta">
                   By <b>{{ p["username"] }}</b> &nbsp;|&nbsp; {{ p["date"] }}
                   {% if p["is_owner"] %}
@@ -169,6 +163,9 @@
                   <img src="/get_image/{{post_controller.get_filename(p)}}"
                        alt="Post Image"
                        style="max-width: 25%; height: 25%; border: 1px solid #ccc; margin-top: 5px;" loading="lazy">
+                {% else %}
+                  <br>
+                  <div class="small"><i>No image attached.</i></div>
                 {% endif %}
               </div>
               {% endfor %}
