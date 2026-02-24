@@ -2,7 +2,7 @@
 # Project / Output
 # ---------------------------
 PROJECT_NAME           = "Chat Board Website"
-OUTPUT_DIRECTORY       = ../Downloads/Y2KDocs
+OUTPUT_DIRECTORY       = ./docs
 RECURSIVE              = YES
 FULL_PATH_NAMES        = YES
 STRIP_FROM_PATH        = .
@@ -22,7 +22,7 @@ HTML_DYNAMIC_MENUS     = YES
 INPUT                  = .
 INPUT                  = . mainpage.dox
 FILE_PATTERNS          = *.py
-EXCLUDE                = venv .venv __pycache__ docs/doxygen .git node_modules
+EXCLUDE                = venv .venv __pycache__ docs/ .git node_modules .github/ .vscode/ tests/
 
 EXTENSION_MAPPING      = py=Python
 OPTIMIZE_OUTPUT_JAVA   = YES

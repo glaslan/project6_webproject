@@ -429,7 +429,6 @@ def profile():
                     print(action)
 
                     if action == "edit_post":
-                        
 
                         date = request.form.get(DATE)
                         post_id = request.form.get(POST_ID)
@@ -444,7 +443,6 @@ def profile():
                         print("edit")
 
                         return redirect(url_for("profile"))
-                        
 
                     req_type = (data.get("type") or "user").lower()
 
@@ -472,21 +470,29 @@ def profile():
                         }
 
                         ok = auth.db.update_user(user, edited)
-                        return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
+                        return jsonify({"ok": ok, "updated": "user"}), (
+                            200 if ok else 400
+                        )
 
                     if req_type == POST:
                         post_id = data.get(POST_ID)
                         if post_id is None:
                             return (
                                 jsonify(
-                                    {"ok": False, "error": "PATCH post requires post_id"}
+                                    {
+                                        "ok": False,
+                                        "error": "PATCH post requires post_id",
+                                    }
                                 ),
                                 400,
                             )
 
                         old_post = posts.get_post_by_id(int(post_id))
                         if not old_post:
-                            return jsonify({"ok": False, "error": "post not found"}), 404
+                            return (
+                                jsonify({"ok": False, "error": "post not found"}),
+                                404,
+                            )
 
                         new_content = data.get(CONTENT)
                         new_image_ext = data.get(IMAGE_EXT)
@@ -516,9 +522,10 @@ def profile():
                     return jsonify({"ok": False, "error": "unknown type"}), 400
 
                 if method == PUT:
-                    new_username = (request.form.get(USERNAME) or user[USERNAME]).strip()
+                    new_username = (
+                        request.form.get(USERNAME) or user[USERNAME]
+                    ).strip()
                     new_password = request.form.get(PASSWORD) or user[PASSWORD]
-
 
                     if not new_username or not new_password:
                         return (
