@@ -128,13 +128,15 @@ def get_current_user(auth: AuthController = None) -> dict | None:
         return _normalise_user(user)
 
 
-@app.route("/", methods=[GET, POST])
+@app.route("/", methods=[GET, POST, OPTIONS])
 def home():
     """
     Docstring for home
     Default route for the home page, also handles post creation
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
+    if request.method == OPTIONS:
+        return jsonify({"GET": True, "POST": True, "PATCH": False, "PUT": False, "DELETE": False, "OPTIONS": True})
 
     with Database(DATABASE_PATH) as db:
         with AuthController(db=db) as auth:
@@ -229,11 +231,12 @@ def register():
     template: The registration page html template, with the current user (if logged in)
     """
 
+    if request.method == OPTIONS:
+        return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
+
     with AuthController(DATABASE_PATH) as auth:
 
-        if request.method == OPTIONS:
-            return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
-
+        
         if request.method == POST:
             username = (request.form.get(USERNAME) or "").strip()
             password = request.form.get(PASSWORD) or ""
