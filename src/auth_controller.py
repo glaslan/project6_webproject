@@ -28,7 +28,7 @@ class AuthController:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context manager to close database connection"""
-        if getattr(self, '_owns_db', False):
+        if getattr(self, "_owns_db", False):
             self.db.close()
         return False
 
