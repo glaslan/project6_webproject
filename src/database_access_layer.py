@@ -63,8 +63,6 @@ class Database:
         )
         self.connection.commit()
 
-
-
     def __enter__(self):
         return self
 
@@ -97,11 +95,14 @@ class Database:
             try:
                 if user_id:
                     self.connection.execute(
-                        "INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json])
+                        "INSERT INTO users (user_id, json) VALUES (?, ?)",
+                        ([user_id, json]),
                     )
                     self.connection.commit()
                 else:
-                    self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
+                    self.connection.execute(
+                        "INSERT INTO users (json) VALUES (?)", ([json])
+                    )
                     self.connection.commit()
                 return True
             except sql.IntegrityError:
