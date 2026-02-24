@@ -1,10 +1,6 @@
 """ This module is the main entry point for the Flask app """
 import os
 from datetime import timedelta
-from re import T
-from tracemalloc import start
-from uuid import uuid4
-import traceback
 
 from flask import (
     Flask,
@@ -16,10 +12,10 @@ from flask import (
     session,
     flash,
     send_from_directory,
+    abort,
 )
-from flask import send_from_directory, abort
 from flask_jwt_extended import JWTManager
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
 from src.constants import (
     DATABASE_PATH,
