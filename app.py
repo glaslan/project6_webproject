@@ -569,13 +569,17 @@ def profile():
 
 
 # I am not sure what to do with this.
-@app.route("/health")
+@app.route("/health", methods=[GET, OPTIONS])
 def health():
     """
     Default route for checking that the website is up and reachable
     Returns:
     json: A json object indicating whether the website is healthy
     """
+    if request.method == OPTIONS:
+                    resp = app.make_response(("", 204))
+                    resp.headers["Allow"] = "GET, OPTIONS"
+                    return resp
     return jsonify({"status": "healthy"})
 
 
