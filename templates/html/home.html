@@ -149,7 +149,7 @@
             {% else %}
               {% for p in posts %}
                 <div class="post-meta">
-                  By <b>{{ post_controller.get_username(p) }}</b> &nbsp;|&nbsp; {{ p["date"] }}
+                  By <b>{{ p["username"] }}</b> &nbsp;|&nbsp; {{ p["date"] }}
                   {% if p["is_owner"] %}
                     &nbsp;|&nbsp; <a href="/profile">Manage</a>
                   {% endif %}

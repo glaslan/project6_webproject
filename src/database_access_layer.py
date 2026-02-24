@@ -1,8 +1,12 @@
 import sqlite3 as sql
 import datetime
 import traceback
+import threading
 
 from src.constants import *
+
+# Global lock for SQLite write operations - SQLite only allows one writer at a time
+_db_write_lock = threading.Lock()
 
 
 class Database:
@@ -30,7 +34,14 @@ class Database:
         if not path.endswith(".db"):
             path += ".db"
 
+        self._lock = threading.Lock()
         self.connection = sql.connect(path, timeout=60)
+        self._closed = False
+
+        # Enable WAL mode for better concurrent write performance
+        self.connection.execute("PRAGMA journal_mode=WAL")
+        self.connection.execute("PRAGMA synchronous=NORMAL")
+        self.connection.execute("PRAGMA busy_timeout=30000")
 
         # create the user and posts tables if they do not exist
         self.connection.execute(
@@ -39,10 +50,18 @@ class Database:
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS posts (post_id TEXT PRIMARY KEY, json TEXT)"
         )
-        self.connection.commit()
 
-    def __del__(self):
-        self.close()
+        # create indexes on frequently queried JSON fields for performance
+        self.connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(json_extract(json, '$.date'))"
+        )
+        self.connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(json_extract(json, '$.user_id'))"
+        )
+        self.connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_users_username ON users(json_extract(json, '$.username'))"
+        )
+        self.connection.commit()
 
     def __enter__(self):
         return self
@@ -72,19 +91,23 @@ class Database:
         json = '{"username": "' + username + '", "password": "' + password + '"}'
 
         # insert the user_id with the user if it was passed (primarliy for the update user function)
-        try:
-            if user_id:
-                self.connection.execute(
-                    "INSERT INTO users (user_id, json) VALUES (?, ?)", ([user_id, json])
-                )
-                self.connection.commit()
-            else:
-                self.connection.execute("INSERT INTO users (json) VALUES (?)", ([json]))
-                self.connection.commit()
-            return True
-        except sql.IntegrityError:
-            print("Integrity Violated")
-            return False
+        with _db_write_lock:
+            try:
+                if user_id:
+                    self.connection.execute(
+                        "INSERT INTO users (user_id, json) VALUES (?, ?)",
+                        ([user_id, json]),
+                    )
+                    self.connection.commit()
+                else:
+                    self.connection.execute(
+                        "INSERT INTO users (json) VALUES (?)", ([json])
+                    )
+                    self.connection.commit()
+                return True
+            except sql.IntegrityError:
+                print("Integrity Violated")
+                return False
 
     def insert_post(self, post: dict) -> bool:
         """
@@ -123,16 +146,17 @@ class Database:
         )
 
         # insert the post into the databse
-        try:
-            self.connection.execute(
-                "INSERT INTO posts (post_id, json) VALUES (?, ?)",
-                ([str(post_id), json]),
-            )
-            self.connection.commit()
-            return True
-        except sql.IntegrityError:
-            traceback.print_exc()
-            return False
+        with _db_write_lock:
+            try:
+                self.connection.execute(
+                    "INSERT INTO posts (post_id, json) VALUES (?, ?)",
+                    ([str(post_id), json]),
+                )
+                self.connection.commit()
+                return True
+            except sql.IntegrityError:
+                traceback.print_exc()
+                return False
 
     def get_user_by_username(self, username: str) -> dict | None:
         """
@@ -162,9 +186,9 @@ class Database:
         ).fetchone()
 
         if user_id is not None:
-            user[USERNAME] = validate_value((username))
-            user[PASSWORD] = validate_value((password))
-            user[USER_ID] = validate_value((user_id))
+            user[USERNAME] = validate_value(username)
+            user[PASSWORD] = validate_value(password)
+            user[USER_ID] = validate_value(user_id)
             return user
 
         return None
@@ -338,7 +362,7 @@ class Database:
 
     def update_post(self, old_post: dict, edited_post: dict, user_id: int) -> bool:
         """
-        This function updates a posts content and image_ext
+        This function updates a posts content and image_ext atomically
 
         Parameters:
             useer_id: the id of the logged in user
@@ -358,26 +382,25 @@ class Database:
         if author != user_id:
             return False
 
+        post_id = old_post.get(POST_ID)
         content = edited_post.get(CONTENT)
         image = edited_post.get(IMAGE_EXT)
 
-        try:
-            self.connection.execute(
-                "UPDATE posts SET json = json_set(json, '$.content', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                [content, "%" + str(user_id) + "%"],
-            )
-            self.connection.execute(
-                "UPDATE posts SET json = json_set(json, '$.image_ext', ?) WHERE json_extract(json, '$.user_id') LIKE ?",
-                [image, "%" + str(user_id) + "%"],
-            )
-            self.connection.commit()
-            return True
-        except Exception:
-            return False
+        with _db_write_lock:
+            try:
+                # Single atomic update for both fields
+                self.connection.execute(
+                    "UPDATE posts SET json = json_set(json, '$.content', ?, '$.image_ext', ?) WHERE post_id = ?",
+                    [content, image, str(post_id)],
+                )
+                self.connection.commit()
+                return True
+            except Exception:
+                return False
 
     def update_user(self, old_user: dict, edited_user: dict) -> bool:
         """
-        This function updates a user object in the database
+        This function updates a user object in the database atomically
 
         Parameters:
             old_user: the logged in user object
@@ -394,9 +417,22 @@ class Database:
         if old_user.get(USER_ID) != edited_user.get(USER_ID):
             return False
 
-        return self.delete_user(edited_user.get(USER_ID)) and self.insert_user(
-            edited_user
-        )
+        user_id = edited_user.get(USER_ID)
+        username = validate_value(edited_user.get("username"))
+        password = validate_value(edited_user.get("password"))
+        json_str = '{"username": "' + username + '", "password": "' + password + '"}'
+
+        with _db_write_lock:
+            try:
+                # Use atomic UPDATE instead of DELETE + INSERT
+                self.connection.execute(
+                    "UPDATE users SET json = ? WHERE user_id = ?",
+                    [json_str, user_id],
+                )
+                self.connection.commit()
+                return True
+            except Exception:
+                return False
 
     def delete_user(self, user_id: int) -> bool:
         """
@@ -412,14 +448,15 @@ class Database:
             None
         """
 
-        try:
-            data = self.connection.execute(
-                "DELETE FROM users WHERE user_id LIKE ?", ["%" + str(user_id) + "%"]
-            )
-            self.connection.commit()
-            return data is not None
-        except Exception:
-            return False
+        with _db_write_lock:
+            try:
+                data = self.connection.execute(
+                    "DELETE FROM users WHERE user_id LIKE ?", ["%" + str(user_id) + "%"]
+                )
+                self.connection.commit()
+                return data is not None
+            except Exception:
+                return False
 
     def delete_post(self, user_id: int, date: str):
         """
@@ -432,15 +469,37 @@ class Database:
         Returns:
             bool: true if the deletion was successful, false if not
         """
-        try:
-            data = self.connection.execute(
-                "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
-                ["%" + str(user_id) + "%", "%" + date + "%"],
-            )
-            self.connection.commit()
-            return data is not None
-        except Exception:
-            return False
+        with _db_write_lock:
+            try:
+                data = self.connection.execute(
+                    "DELETE FROM posts WHERE json_extract(json, '$.user_id') LIKE ? and json_extract(json, '$.date') LIKE ?",
+                    ["%" + str(user_id) + "%", "%" + date + "%"],
+                )
+                self.connection.commit()
+                return data is not None
+            except Exception:
+                return False
+
+    def delete_user_posts(self, user_id: int) -> bool:
+        """
+        Delete all posts by a user
+
+        Parameters:
+            user_id: the user_id whose posts should be deleted
+
+        Returns:
+            bool: True if deletion was successful, False if not
+        """
+        with _db_write_lock:
+            try:
+                self.connection.execute(
+                    "DELETE FROM posts WHERE json_extract(json, '$.user_id') = ?",
+                    [str(user_id)],
+                )
+                self.connection.commit()
+                return True
+            except Exception:
+                return False
 
     def close(self) -> None:
         """
@@ -455,26 +514,33 @@ class Database:
         Raises:
             None
         """
-        self.connection.close()
+        with self._lock:
+            if not self._closed:
+                self._closed = True
+                try:
+                    self.connection.close()
+                except Exception:
+                    pass  # Connection may already be closed
 
     def reset_tables(self) -> None:
         """
         **ONLY USE IN TESTS ON TEST DATABASE DO NOT WIPE OUR USERS DATA WE CAN SELL IT**
         """
 
-        # remvoe old tables
-        self.connection.execute("DROP TABLE IF EXISTS users")
-        self.connection.execute("DROP TABLE IF EXISTS posts")
+        with _db_write_lock:
+            # remvoe old tables
+            self.connection.execute("DROP TABLE IF EXISTS users")
+            self.connection.execute("DROP TABLE IF EXISTS posts")
 
-        # recreate the tables
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)"
-        )
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)"
-        )
+            # recreate the tables
+            self.connection.execute(
+                "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, json TEXT)"
+            )
+            self.connection.execute(
+                "CREATE TABLE IF NOT EXISTS posts (post_id INTEGER PRIMARY KEY, json TEXT)"
+            )
 
-        self.connection.commit()
+            self.connection.commit()
 
 
 def validate_value(value):
@@ -482,8 +548,5 @@ def validate_value(value):
     if not value:
         return value
     if isinstance(value, tuple):
-        return str(value[0])
+        return value[0]
     return value
-
-
-db = Database(DATABASE_PATH)

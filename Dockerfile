@@ -7,7 +7,6 @@ WORKDIR /app
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn
 
 # Copy application code
 COPY src/ ./src/
@@ -16,7 +15,7 @@ COPY templates/ ./templates/
 COPY database.db .
 COPY images/ ./images/
 
-EXPOSE 5000
+EXPOSE 4000
 
-# Run
-CMD ["gunicorn", "--bind", "0.0.0.0:4000", "app:app"]
+# Run with waitress (production WSGI server)
+CMD ["python", "app.py"]

@@ -5,7 +5,6 @@ import os
 from uuid import uuid4
 from werkzeug.utils import secure_filename
 import datetime
-from PIL import Image
 
 from src.database_access_layer import Database
 from src.constants import *
@@ -18,13 +17,16 @@ APP_DIR = os.path.abspath(os.path.dirname(__file__))
 class PostController:
     """Post controller class"""
 
-    def __init__(self, database_path: str) -> None:
+    def __init__(self, database_path: str = None, db: Database = None) -> None:
         """Constructor for the PostController class"""
-        self.db = Database(database_path)
+        if db is not None:
+            self.db = db
+            self._owns_db = False
+        else:
+            self.db = Database(database_path)
+            self._owns_db = True
 
-    def __del__(self) -> None:
-        """Destructor for the PostController class"""
-        self.db.close()
+    # No __del__ - context managers handle cleanup deterministically
 
     def __enter__(self):
         """Enter context manager to return self for use in 'with' block"""
@@ -32,7 +34,8 @@ class PostController:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context manager to close database connection"""
-        self.db.close()
+        if getattr(self, "_owns_db", False):
+            self.db.close()
         return False
 
     def create_post(self, post: dict) -> bool:
@@ -44,24 +47,78 @@ class PostController:
         post[DATE] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return self.db.insert_post(post)
 
-    def get_posts(self, page) -> list[dict]:
-        """Returns a list of all posts in the database"""
+    def get_posts(
+        self, page: int = None, page_size: int = 10
+    ) -> tuple[list[dict], bool]:
+        """Returns a list of posts in the database, optionally paginated, with usernames included.
 
-        # for each post insert the id into the json so the entire object is represented in a json
+        Returns:
+            tuple: (list of posts, has_more boolean)
+        """
+
         post_collection = []
-        posts = self.db.connection.execute(
-            f"SELECT post_id, json_extract(json, '$.user_id'), json_extract(json, '$.image_ext'), json_extract(json, '$.content'), json_extract(json, '$.date') FROM posts ORDER BY json_extract(json, '$.date') DESC LIMIT 10 OFFSET {(page-1)*10}"
-        ).fetchall()
+        query = """
+            SELECT
+                p.post_id,
+                json_extract(p.json, '$.user_id'),
+                json_extract(p.json, '$.image_ext'),
+                json_extract(p.json, '$.content'),
+                json_extract(p.json, '$.date'),
+                COALESCE(json_extract(u.json, '$.username'), '[deleted]')
+            FROM posts p
+            LEFT JOIN users u ON json_extract(p.json, '$.user_id') = CAST(u.user_id AS TEXT)
+            ORDER BY json_extract(p.json, '$.date') DESC
+        """
+        if page is not None:
+            # Fetch one extra to check if there are more pages
+            query += f" LIMIT {page_size + 1} OFFSET {(page-1)*page_size}"
 
-        # this might be the most cursed for loop i've ever written
-        for post_id, user_id, image_ext, content, date in posts:
+        posts = self.db.connection.execute(query).fetchall()
 
+        # Check if there are more posts than page_size
+        has_more = len(posts) > page_size if page is not None else False
+        # Only return up to page_size posts
+        posts = posts[:page_size] if page is not None else posts
+
+        for post_id, user_id, image_ext, content, date, username in posts:
             structured_post = {}
             structured_post[POST_ID] = validate_value(post_id)
             structured_post[USER_ID] = validate_value(user_id)
             structured_post[IMAGE_EXT] = validate_value(image_ext)
             structured_post[CONTENT] = validate_value(content)
             structured_post[DATE] = validate_value(date)
+            structured_post[USERNAME] = validate_value(username) or "[deleted]"
+            post_collection.append(structured_post)
+
+        return post_collection, has_more
+
+    def get_user_posts(self, user_id: str) -> list[dict]:
+        """Returns all posts for a specific user, with username included"""
+
+        post_collection = []
+        query = """
+            SELECT
+                p.post_id,
+                json_extract(p.json, '$.user_id'),
+                json_extract(p.json, '$.image_ext'),
+                json_extract(p.json, '$.content'),
+                json_extract(p.json, '$.date'),
+                COALESCE(json_extract(u.json, '$.username'), '[deleted]')
+            FROM posts p
+            LEFT JOIN users u ON json_extract(p.json, '$.user_id') = CAST(u.user_id AS TEXT)
+            WHERE json_extract(p.json, '$.user_id') = ?
+            ORDER BY json_extract(p.json, '$.date') DESC
+        """
+        posts = self.db.connection.execute(query, (user_id,)).fetchall()
+
+        for post_id, uid, image_ext, content, date, username in posts:
+            structured_post = {}
+            structured_post[POST_ID] = validate_value(post_id)
+            structured_post[USER_ID] = validate_value(uid)
+            structured_post[IMAGE_EXT] = validate_value(image_ext)
+            structured_post[CONTENT] = validate_value(content)
+            structured_post[DATE] = validate_value(date)
+            structured_post[USERNAME] = validate_value(username) or "[deleted]"
             post_collection.append(structured_post)
 
         return post_collection
@@ -106,7 +163,10 @@ class PostController:
         return f"{post[POST_ID]}{post[IMAGE_EXT]}"
 
     def get_username(self, post: dict):
-        return self.db.get_user_by_id(post.get(USER_ID)).get(USERNAME)
+        user = self.db.get_user_by_id(post.get(USER_ID))
+        if user is None:
+            return "[deleted]"
+        return user.get(USERNAME)
 
     def allowed_file(filename) -> bool:
         """Check if the uploaded image has an acceptable extension"""
@@ -116,21 +176,27 @@ class PostController:
 
     def upload_image(self, file, post_id, upload_dir) -> bool:
         """
-        Opens file, checks to ensure it is an image then saves it to the uploads folder
+        Opens file, checks to ensure it is an image then saves it to the uploads folder.
+        Image resizing is done asynchronously in a background thread to avoid blocking.
         """
-        if "." in file.filename:
-            image_ext = file.filename.rsplit(".", 1)[1].lower()
-            safe_name = f"{post_id}.{image_ext}"
-            file.save(os.path.join(upload_dir, safe_name))
-            image = Image.open(os.path.join(upload_dir, safe_name))
-            try:
-                scaled_image = image.resize((256, 256))
-                scaled_image.save(os.path.join(upload_dir, safe_name))
-            finally:
-                scaled_image.close()
-                image.close()
-            return image_ext
-        return None
+        if "." not in file.filename:
+            return None
+
+        image_ext = file.filename.rsplit(".", 1)[1].lower()
+
+        if image_ext not in ALLOWED_EXTENSIONS:
+            return None
+
+        safe_name = f"{post_id}.{image_ext}"
+        file_path = os.path.join(upload_dir, safe_name)
+        file.save(file_path)
+
+        # Queue resize in background instead of blocking the request
+        from src.image_queue import queue_resize
+
+        queue_resize(file_path)
+
+        return image_ext
 
 
 def validate_value(value):
