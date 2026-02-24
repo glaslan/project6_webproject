@@ -1,9 +1,6 @@
 """ This module is the main entry point for the Flask app """
 import os
 from datetime import timedelta
-from tracemalloc import start
-from uuid import uuid4
-import traceback
 
 from flask import (
     Flask,
@@ -15,10 +12,10 @@ from flask import (
     session,
     flash,
     send_from_directory,
+    abort,
 )
-from flask import send_from_directory, abort
 from flask_jwt_extended import JWTManager
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
 from src.constants import (
     DATABASE_PATH,
@@ -131,13 +128,24 @@ def get_current_user(auth: AuthController = None) -> dict | None:
         return _normalise_user(user)
 
 
-@app.route("/", methods=[GET, POST])
+@app.route("/", methods=[GET, POST, OPTIONS])
 def home():
     """
     Docstring for home
     Default route for the home page, also handles post creation
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
+    if request.method == OPTIONS:
+        return jsonify(
+            {
+                "GET": True,
+                "POST": True,
+                "PATCH": False,
+                "PUT": False,
+                "DELETE": False,
+                "OPTIONS": True,
+            }
+        )
 
     with Database(DATABASE_PATH) as db:
         with AuthController(db=db) as auth:
@@ -232,12 +240,19 @@ def register():
     template: The registration page html template, with the current user (if logged in)
     """
 
-    with AuthController(DATABASE_PATH) as auth:
+    if request.method == OPTIONS:
+        return jsonify(
+            {
+                "GET": True,
+                "POST": True,
+                "PATCH": True,
+                "PUT": True,
+                "DELETE": True,
+                "OPTIONS": True,
+            }
+        )
 
-        if request.method == OPTIONS:
-            resp = app.make_response(("", 204))
-            resp.headers["Allow"] = "GET, POST, OPTIONS"
-            return resp
+    with AuthController(DATABASE_PATH) as auth:
 
         if request.method == POST:
             username = (request.form.get(USERNAME) or "").strip()
@@ -293,9 +308,16 @@ def login():
     with AuthController(DATABASE_PATH) as auth:
 
         if request.method == OPTIONS:
-            resp = app.make_response(("", 204))
-            resp.headers["Allow"] = "GET, POST, OPTIONS"
-            return resp
+            return jsonify(
+                {
+                    "GET": True,
+                    "POST": True,
+                    "PATCH": True,
+                    "PUT": True,
+                    "DELETE": True,
+                    "OPTIONS": True,
+                }
+            )
 
         user = get_current_user(auth)
         if user:
@@ -331,9 +353,16 @@ def profile():
             with PostController(db=db) as posts:
 
                 if request.method == OPTIONS:
-                    resp = app.make_response(("", 204))
-                    resp.headers["Allow"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                    return resp
+                    return jsonify(
+                        {
+                            "GET": True,
+                            "POST": True,
+                            "PATCH": True,
+                            "PUT": True,
+                            "DELETE": True,
+                            "OPTIONS": True,
+                        }
+                    )
 
                 user = get_current_user(auth)
                 user = _normalise_user(user)
@@ -569,13 +598,24 @@ def profile():
 
 
 # I am not sure what to do with this.
-@app.route("/health")
+@app.route("/health", methods=[GET, OPTIONS])
 def health():
     """
     Default route for checking that the website is up and reachable
     Returns:
     json: A json object indicating whether the website is healthy
     """
+    if request.method == OPTIONS:
+        return jsonify(
+            {
+                "GET": True,
+                "POST": False,
+                "PATCH": False,
+                "PUT": False,
+                "DELETE": False,
+                "OPTIONS": True,
+            }
+        )
     return jsonify({"status": "healthy"})
 
 
