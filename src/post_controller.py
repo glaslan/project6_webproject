@@ -34,7 +34,7 @@ class PostController:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context manager to close database connection"""
-        if getattr(self, '_owns_db', False):
+        if getattr(self, "_owns_db", False):
             self.db.close()
         return False
 
@@ -47,7 +47,9 @@ class PostController:
         post[DATE] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return self.db.insert_post(post)
 
-    def get_posts(self, page: int = None, page_size: int = 10) -> tuple[list[dict], bool]:
+    def get_posts(
+        self, page: int = None, page_size: int = 10
+    ) -> tuple[list[dict], bool]:
         """Returns a list of posts in the database, optionally paginated, with usernames included.
 
         Returns:
@@ -191,6 +193,7 @@ class PostController:
 
         # Queue resize in background instead of blocking the request
         from src.image_queue import queue_resize
+
         queue_resize(file_path)
 
         return image_ext

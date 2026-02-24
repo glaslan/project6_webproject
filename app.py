@@ -421,21 +421,29 @@ def profile():
                         }
 
                         ok = auth.db.update_user(user, edited)
-                        return jsonify({"ok": ok, "updated": "user"}), (200 if ok else 400)
+                        return jsonify({"ok": ok, "updated": "user"}), (
+                            200 if ok else 400
+                        )
 
                     if req_type == POST:
                         post_id = data.get(POST_ID)
                         if post_id is None:
                             return (
                                 jsonify(
-                                    {"ok": False, "error": "PATCH post requires post_id"}
+                                    {
+                                        "ok": False,
+                                        "error": "PATCH post requires post_id",
+                                    }
                                 ),
                                 400,
                             )
 
                         old_post = posts.get_post_by_id(int(post_id))
                         if not old_post:
-                            return jsonify({"ok": False, "error": "post not found"}), 404
+                            return (
+                                jsonify({"ok": False, "error": "post not found"}),
+                                404,
+                            )
 
                         new_content = data.get(CONTENT)
                         new_image_ext = data.get(IMAGE_EXT)
@@ -489,7 +497,9 @@ def profile():
                         }
 
                         ok = auth.db.update_user(user, edited)
-                        return jsonify({"ok": ok, "replaced": "user"}), (200 if ok else 400)
+                        return jsonify({"ok": ok, "replaced": "user"}), (
+                            200 if ok else 400
+                        )
 
                     if req_type == POST:
                         post_id = data.get(POST_ID)
@@ -509,7 +519,10 @@ def profile():
 
                         old_post = db.get_post_by_id(int(post_id))
                         if not old_post:
-                            return jsonify({"ok": False, "error": "post not found"}), 404
+                            return (
+                                jsonify({"ok": False, "error": "post not found"}),
+                                404,
+                            )
 
                         author = _unwrap(old_post.get(USER_ID))
                         if str(author) != str(user[USER_ID]):
@@ -539,14 +552,18 @@ def profile():
                             )
 
                         ok = posts.delete_post(str(user[USER_ID]), date)
-                        return jsonify({"ok": ok, "deleted": POST}), (200 if ok else 400)
+                        return jsonify({"ok": ok, "deleted": POST}), (
+                            200 if ok else 400
+                        )
 
                     if req_type == "user":
                         db.delete_user_posts(user[USER_ID])
                         ok = db.delete_user(str(user[USER_ID]))
                         if ok:
                             session.pop(USER_ID, None)
-                        return jsonify({"ok": ok, "deleted": "user"}), (200 if ok else 400)
+                        return jsonify({"ok": ok, "deleted": "user"}), (
+                            200 if ok else 400
+                        )
 
                     return jsonify({"ok": False, "error": "unknown type"}), 400
 
@@ -573,8 +590,8 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=4000,
-        threads=16,             # Up from default 4
-        connection_limit=200,   # Max concurrent connections
-        channel_timeout=120,    # Request timeout in seconds
-        recv_bytes=65536,       # Larger receive buffer
+        threads=16,  # Up from default 4
+        connection_limit=200,  # Max concurrent connections
+        channel_timeout=120,  # Request timeout in seconds
+        recv_bytes=65536,  # Larger receive buffer
     )
