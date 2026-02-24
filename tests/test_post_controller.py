@@ -141,7 +141,7 @@ class TestPostController:
         pc.create_post(post2)
         pc.create_post(post3)
 
-        result = pc.get_posts(1)
+        result, _ = pc.get_posts(1)
 
         # assert
         assert len(result) == 3

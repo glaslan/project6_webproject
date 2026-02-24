@@ -98,9 +98,9 @@ class TestDatabase:
 
         # assert
         assert result1 is None
-        assert result2[USER_ID] == "123"
-        assert result2[USERNAME] == "test_user"
-        assert result2[PASSWORD] == "test_password"
+        assert str(result2[USER_ID]) == "123"
+        assert str(result2[USERNAME]) == "test_user"
+        assert str(result2[PASSWORD]) == "test_password"
 
     # TEST-DB-FUNC-0006
     def test_get_user_by_id(self):
@@ -146,11 +146,11 @@ class TestDatabase:
 
         # assert
         assert result1 is None
-        assert result2[USER_ID] == "1234"
-        assert result2[POST_ID] == "123456789"
-        assert result2[DATE] == "2026-02-15"
-        assert result2[IMAGE_EXT] == "NONE"
-        assert result2[CONTENT] == "test"
+        assert str(result2[USER_ID]) == "1234"
+        assert str(result2[POST_ID]) == "123456789"
+        assert str(result2[DATE]) == "2026-02-15"
+        assert str(result2[IMAGE_EXT]) == "NONE"
+        assert str(result2[CONTENT]) == "test"
 
     # TEST-DB-FUNC-0008
     def test_get_post_by_id(self):

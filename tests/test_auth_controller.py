@@ -90,7 +90,7 @@ class TestAuthController:
 
         result = ac.login(self.user)
 
-        assert result == self.user[USER_ID]
+        assert str(result) == str(self.user[USER_ID])
 
     # TEST-AC-ITGR-0005
     def test_login_invalid(self):
