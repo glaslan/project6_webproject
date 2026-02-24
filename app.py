@@ -1,6 +1,7 @@
 """ This module is the main entry point for the Flask app """
 import os
 from datetime import timedelta
+from re import T
 from tracemalloc import start
 from uuid import uuid4
 import traceback
@@ -235,9 +236,7 @@ def register():
     with AuthController(DATABASE_PATH) as auth:
 
         if request.method == OPTIONS:
-            resp = app.make_response(("", 204))
-            resp.headers["Allow"] = "GET, POST, OPTIONS"
-            return resp
+            return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
 
         if request.method == POST:
             username = (request.form.get(USERNAME) or "").strip()
@@ -293,9 +292,7 @@ def login():
     with AuthController(DATABASE_PATH) as auth:
 
         if request.method == OPTIONS:
-            resp = app.make_response(("", 204))
-            resp.headers["Allow"] = "GET, POST, OPTIONS"
-            return resp
+            return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
 
         user = get_current_user(auth)
         if user:
@@ -331,9 +328,7 @@ def profile():
             with PostController(db=db) as posts:
 
                 if request.method == OPTIONS:
-                    resp = app.make_response(("", 204))
-                    resp.headers["Allow"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                    return resp
+                    return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
 
                 user = get_current_user(auth)
                 user = _normalise_user(user)
@@ -577,9 +572,7 @@ def health():
     json: A json object indicating whether the website is healthy
     """
     if request.method == OPTIONS:
-                    resp = app.make_response(("", 204))
-                    resp.headers["Allow"] = "GET, OPTIONS"
-                    return resp
+        return jsonify({"GET": True, "POST": False, "PATCH": False, "PUT": False, "DELETE": False, "OPTIONS": True})
     return jsonify({"status": "healthy"})
 
 
