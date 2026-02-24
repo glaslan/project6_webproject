@@ -136,7 +136,16 @@ def home():
     Returns:   template: The home page html template, with the list of posts and the current user (if logged in)
     """
     if request.method == OPTIONS:
-        return jsonify({"GET": True, "POST": True, "PATCH": False, "PUT": False, "DELETE": False, "OPTIONS": True})
+        return jsonify(
+            {
+                "GET": True,
+                "POST": True,
+                "PATCH": False,
+                "PUT": False,
+                "DELETE": False,
+                "OPTIONS": True,
+            }
+        )
 
     with Database(DATABASE_PATH) as db:
         with AuthController(db=db) as auth:
@@ -232,11 +241,19 @@ def register():
     """
 
     if request.method == OPTIONS:
-        return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
+        return jsonify(
+            {
+                "GET": True,
+                "POST": True,
+                "PATCH": True,
+                "PUT": True,
+                "DELETE": True,
+                "OPTIONS": True,
+            }
+        )
 
     with AuthController(DATABASE_PATH) as auth:
 
-        
         if request.method == POST:
             username = (request.form.get(USERNAME) or "").strip()
             password = request.form.get(PASSWORD) or ""
@@ -291,7 +308,16 @@ def login():
     with AuthController(DATABASE_PATH) as auth:
 
         if request.method == OPTIONS:
-            return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
+            return jsonify(
+                {
+                    "GET": True,
+                    "POST": True,
+                    "PATCH": True,
+                    "PUT": True,
+                    "DELETE": True,
+                    "OPTIONS": True,
+                }
+            )
 
         user = get_current_user(auth)
         if user:
@@ -327,7 +353,16 @@ def profile():
             with PostController(db=db) as posts:
 
                 if request.method == OPTIONS:
-                    return jsonify({"GET": True, "POST": True, "PATCH": True, "PUT": True, "DELETE": True, "OPTIONS": True})
+                    return jsonify(
+                        {
+                            "GET": True,
+                            "POST": True,
+                            "PATCH": True,
+                            "PUT": True,
+                            "DELETE": True,
+                            "OPTIONS": True,
+                        }
+                    )
 
                 user = get_current_user(auth)
                 user = _normalise_user(user)
@@ -571,7 +606,16 @@ def health():
     json: A json object indicating whether the website is healthy
     """
     if request.method == OPTIONS:
-        return jsonify({"GET": True, "POST": False, "PATCH": False, "PUT": False, "DELETE": False, "OPTIONS": True})
+        return jsonify(
+            {
+                "GET": True,
+                "POST": False,
+                "PATCH": False,
+                "PUT": False,
+                "DELETE": False,
+                "OPTIONS": True,
+            }
+        )
     return jsonify({"status": "healthy"})
 
 
