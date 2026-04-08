@@ -107,7 +107,7 @@ class PostController:
             FROM posts p
             LEFT JOIN users u ON json_extract(p.json, '$.user_id') = CAST(u.user_id AS TEXT)
             WHERE json_extract(p.json, '$.user_id') = ?
-            ORDER BY json_extract(p.json, '$.date') DESC
+            ORDER BY json_extract(p.json, '$.date') DESC LIMIT 100 OFFSET 0
         """
         posts = self.db.connection.execute(query, (user_id,)).fetchall()
 
